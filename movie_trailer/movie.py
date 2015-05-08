@@ -6,11 +6,17 @@
 from fresh_tomatoes import open_movies_page
 
 class Movie:
+    """A movie object that contains information about its title, box art and
+    youtube trailer.."""
+
     def __init__(self, title, poster_image_url, trailer_youtube_url):
+        """Create an object with corrsponding information supplied as input."""
         self.title = title
         self.poster_image_url = poster_image_url
         self.trailer_youtube_url = trailer_youtube_url
 
+# Create a list of favorite movies together with their box arts (from Wikipedia)
+# and Youtube trailers.
 favorite_movies = [
     Movie("Forrest Gump",
           "https://upload.wikimedia.org/wikipedia/en/6/67/Forrest_Gump_poster.jpg",
@@ -42,4 +48,5 @@ favorite_movies = [
 ]
 
 if __name__ == "__main__":
+    # Generate the webpage with the provided helper function.
     open_movies_page(favorite_movies)
