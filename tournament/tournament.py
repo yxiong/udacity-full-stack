@@ -72,7 +72,8 @@ def playerStandings():
     c = db.cursor()
     c.execute(r"""SELECT pid, Players.pname, PlayerRecords.wins,
                          (PlayerRecords.wins + PlayerRecords.losts) AS total
-                         FROM Players NATURAL JOIN PlayerRecords;""")
+                  FROM Players NATURAL JOIN PlayerRecords
+                  ORDER BY PlayerRecords.wins DESC;""")
     records = c.fetchall()
     db.close()
     return records
@@ -87,7 +88,7 @@ def reportMatch(winner, loser):
     """
     db = connect()
     c = db.cursor()
-    c.execute("INSERT INTO Matches VALUES ({0}, {1});".format(winner, loser))
+    c.execute("INSERT INTO Matches VALUES (%s, %s);", (winner, loser))
     db.commit()
     db.close()
  
@@ -107,5 +108,12 @@ def swissPairings():
         id2: the second player's unique id
         name2: the second player's name
     """
-
-
+    db = connect()
+    c = db.cursor()
+    c.execute(r"""SELECT pid, Players.pname, PlayerRecords.wins
+                  FROM Players NATURAL JOIN PlayerRecords
+                  ORDER BY PlayerRecords.wins DESC;""")
+    r = c.fetchall()
+    db.close()
+    return [(r[i][0], r[i][1], r[i+1][0], r[i+1][1])
+            for i in xrange(0, len(r), 2)]
