@@ -11,9 +11,11 @@ them up in matches in a tournament.
    in `tournament.sql`. One can also create the database and import schema
    manually with the following steps:
 
+       ```
        dropdb --if-exists tournament
        createdb tournament
        psql tournament -f /vagrant/tournament/tournament.sql
+       ```
 
 2. Log in to the virtual machine with `vagrant ssh`, and then go to
    `/vagrant/tournament` directory.
