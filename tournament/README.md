@@ -7,7 +7,7 @@ them up in matches in a tournament.
 
 1. Launch the vagrant virtual machine: go to the parent directory (where
    `Vagrantfile` resides) and run `vagrant up`. This will create the virtual
-   machine and also a tournament in it database according to the schema defined
+   machine and also a tournament database in it according to the schema defined
    in `tournament.sql`. One can also create the database and import schema
    manually with the following steps:
 
