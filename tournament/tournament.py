@@ -70,6 +70,8 @@ def playerStandings():
     """
     db = connect()
     c = db.cursor()
+    # Join the 'Players' table and 'PlayerRecords' view to get players' name,
+    # their winning records as well as total number of matches the have played.
     c.execute(r"""SELECT pid, Players.pname, PlayerRecords.wins,
                          (PlayerRecords.wins + PlayerRecords.losts) AS total
                   FROM Players NATURAL JOIN PlayerRecords
@@ -110,10 +112,13 @@ def swissPairings():
     """
     db = connect()
     c = db.cursor()
+    # Join the 'Players' table and 'PlayerRecords' view so that we can sort the
+    # players according to number of games they won.
     c.execute(r"""SELECT pid, Players.pname, PlayerRecords.wins
                   FROM Players NATURAL JOIN PlayerRecords
                   ORDER BY PlayerRecords.wins DESC;""")
     r = c.fetchall()
     db.close()
+    # Each player is paired with an adjacent player in the standings.
     return [(r[i][0], r[i][1], r[i+1][0], r[i+1][1])
             for i in xrange(0, len(r), 2)]

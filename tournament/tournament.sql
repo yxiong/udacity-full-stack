@@ -9,8 +9,8 @@
 CREATE TABLE Players ( pid SERIAL PRIMARY KEY,
                        pname varchar(255) );
 
-CREATE TABLE Matches ( winner int,
-                       loser int );
+CREATE TABLE Matches ( winner int REFERENCES Players(pid),
+                       loser int REFERENCES Players(pid) );
 
 
 -- Create a player records view storing each player's winning and losing times.
