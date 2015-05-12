@@ -29,30 +29,28 @@ class Item(Base):
     category = relationship(Category)
 
 
-engine = create_engine("sqlite:///catalog.db")
-Base.metadata.create_all(engine)
+if __name__ == "__main__":
+    engine = create_engine("sqlite:///catalog.db")
+    Base.metadata.create_all(engine)
 
+    Base.metadata.bind = engine
+    DBSession = sessionmaker(bind = engine)
+    session = DBSession()
 
-Base.metadata.bind = engine
-DBSession = sessionmaker(bind = engine)
-session = DBSession()
+    myFirstCategory = Category(cid = 1, name = "USA")
+    session.add(myFirstCategory)
+    session.commit()
+    print session.query(Category).all()
 
-myFirstCategory = Category(cid = 1, name = "USA")
-session.add(myFirstCategory)
-session.commit()
-print session.query(Category).all()
+    myFirstItem = Item(iid = 1, name = "Boston", category_id = 1,
+                       description = u"The city I lived in.",
+                       category = myFirstCategory)
+    session.add(myFirstItem)
+    session.commit()
+    print session.query(Item).first().name
 
-
-myFirstItem = Item(iid = 1, name = "Boston", category_id = 1,
-                   description = u"The city I lived in.",
-                   category = myFirstCategory)
-session.add(myFirstItem)
-session.commit()
-print session.query(Item).first().name
-
-
-item = session.query(Item).filter_by(name = "Boston").one()
-item.description = u"The city I am living in."
-session.add(item)
-session.commit()
-print item.description
+    item = session.query(Item).filter_by(name = "Boston").one()
+    item.description = u"The city I am living in."
+    session.add(item)
+    session.commit()
+    print item.description
