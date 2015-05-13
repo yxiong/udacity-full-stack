@@ -1,3 +1,12 @@
+# Each category contains four lines:
+#
+#   item name
+#   category name
+#   some descriptions, this can be long but stays in one line
+#   wikipedia link
+#
+# Every line starts with a `#` are comment and ignored by the parser.
+
 Boston
 United States
 
@@ -5,7 +14,7 @@ Boston (pronounced Listeni/ˈbɒstən/) is the capital and largest city[11] of t
 
 https://en.wikipedia.org/wiki/Boston
 
-================
+# ================================================================
 
 New York City
 United States
@@ -14,7 +23,7 @@ New York – often called New York City or the City of New York to distinguish i
 
 https://en.wikipedia.org/wiki/New_York_City
 
-================
+# ================================================================
 
 Los Angeles
 United States
@@ -23,7 +32,7 @@ Los Angeles (Listeni/lɒs ˈændʒəlɨs/[14]), officially the City of Los Angel
 
 https://en.wikipedia.org/wiki/Los_Angeles
 
-================
+# ================================================================
 
 Chicago
 United States
@@ -32,7 +41,7 @@ Chicago (Listeni/ʃɨˈkɑːɡoʊ/ or /ʃɨˈkɔːɡoʊ/) is the third most popu
 
 https://en.wikipedia.org/wiki/Chicago
 
-================
+# ================================================================
 
 Beijing
 China
@@ -41,7 +50,7 @@ Beijing, sometimes romanized as Peking,[7] is the capital of the People's Republ
 
 https://en.wikipedia.org/wiki/Beijing
 
-================
+# ================================================================
 
 Shanghai
 China
@@ -50,7 +59,7 @@ Shanghai is the largest Chinese city by population[8][9] and the largest city pr
 
 https://en.wikipedia.org/wiki/Shanghai
 
-================
+# ================================================================
 
 Dalian
 China
@@ -59,7 +68,7 @@ Dalian is a major city and seaport in the south of Liaoning Province, People's R
 
 https://en.wikipedia.org/wiki/Dalian
 
-================
+# ================================================================
 
 Chengdu
 China
@@ -68,7 +77,7 @@ Chengdu, formerly romanized as Chengtu, is the provincial capital of Sichuan pro
 
 https://en.wikipedia.org/wiki/Chengdu
 
-================
+# ================================================================
 
 Tianjin
 China
@@ -77,7 +86,7 @@ Tianjin (Chinese: 天津; pinyin: Tiānjīn; Mandarin: [tʰjɛn˥ tɕin˥] ( lis
 
 https://en.wikipedia.org/wiki/Tianjin
 
-================
+# ================================================================
 
 London
 Great Britain
@@ -86,7 +95,7 @@ London (Listeni/ˈlʌndən/)[3] is the capital and most populous city of England
 
 https://en.wikipedia.org/wiki/London
 
-================
+# ================================================================
 
 Birmingham
 Great Britain
@@ -95,7 +104,7 @@ Birmingham (Listeni/ˈbɜrmɪŋəm/, locally /ˈbɜrmɪŋɡəm/) is a city and m
 
 https://en.wikipedia.org/wiki/Birmingham
 
-================
+# ================================================================
 
 Cape Town
 South Africa
@@ -104,7 +113,7 @@ Cape Town (Afrikaans: Kaapstad [ˈkɑːpstɐt]; Xhosa: Ikapa) ranks second among
 
 https://en.wikipedia.org/wiki/Cape_Town
 
-================
+# ================================================================
 
 Johannesburg
 South Africa
@@ -113,7 +122,7 @@ Johannesburg (/dʒoʊˈhænɪsbɜrɡ/; Afrikaans: [joˈɦɐnəsbœrχ]) (also kn
 
 https://en.wikipedia.org/wiki/Johannesburg
 
-================
+# ================================================================
 
 Rio de Janeiro
 Brazil
@@ -122,7 +131,7 @@ Rio de Janeiro (/ˈriːoʊ di ʒəˈnɛəroʊ, -deɪ ʒə-, -də dʒə-/; Portug
 
 https://en.wikipedia.org/wiki/Rio_de_Janeiro
 
-================
+# ================================================================
 
 Sydney
 Australia
@@ -131,7 +140,7 @@ Sydney /ˈsɪdni/[6] is the state capital of New South Wales and the most populo
 
 https://en.wikipedia.org/wiki/Sydney
 
-================
+# ================================================================
 
 Melbourne
 Australia

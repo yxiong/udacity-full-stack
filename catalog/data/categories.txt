@@ -1,6 +1,54 @@
+# Each category contains three lines:
+#
+#   category name
+#   some descriptions, this can be long but stays in one line
+#   wikipedia link
+#
+# Every line starts with a `#` are comment and ignored by the parser.
+
 United States
+
+The United States of America (USA), commonly referred to as the United States (U.S.) or America, is a federal republic[16][17] consisting of 50 states and a federal district. The 48 contiguous states and Washington, D.C., are in central North America between Canada and Mexico. The state of Alaska is located in the northwestern part of North America and the state of Hawaii is an archipelago in the mid-Pacific. The country also has five populated and numerous unpopulated territories in the Pacific and the Caribbean. At 3.80 million square miles (9.85 million km2)[18] and with over 320 million people, the United States is the world's fourth-largest country by total area and third most populous. It is one of the world's most ethnically diverse and multicultural nations, the product of large-scale immigration from many countries.[19] The geography and climate of the United States are also extremely diverse, and the country is home to a wide variety of wildlife.[20]
+
+https://en.wikipedia.org/wiki/United_States
+
+# ================================================================
+
 China
+
+China (simplified Chinese: 中国; traditional Chinese: 中國; pinyin: Zhōngguó), officially the People's Republic of China (PRC), is a sovereign state located in East Asia. It is the world's most populous country, with a population of over 1.35 billion. The PRC is a single-party state governed by the Chinese Communist Party, with its seat of government in the capital city of Beijing.[16] It exercises jurisdiction over 22 provinces, five autonomous regions, four direct-controlled municipalities (Beijing, Tianjin, Shanghai and Chongqing), and two mostly self-governing special administrative regions (Hong Kong and Macau). The PRC also claims the territories governed by the Republic of China (ROC), a separate political entity commonly known as Taiwan, as a part of its territory, which includes the island of Taiwan as Taiwan Province, Kinmen and Matsu as a part of Fujian Province and islands the ROC controls in the South China Sea as a part of Hainan Province. These claims are controversial due to the complex political status of Taiwan.[17]
+
+https://en.wikipedia.org/wiki/China
+
+
+# ================================================================
+
 Great Britain
+
+Great Britain, also known as Britain /ˈbrɪ.tən/, is an island in the North Atlantic off the north-west coast of continental Europe. With an area of 229,848 km2 (88,745 sq mi), it is the largest island of the British Isles, the largest island in Europe and the ninth-largest in the world.[5][6] In 2011 the island had a population of about 61 million people, making it the third-most populous island in the world, after Java in Indonesia and Honshū in Japan.[7][8] It is surrounded by over 1,000 smaller islands.[9] The island of Ireland lies to its west.
+
+https://en.wikipedia.org/wiki/Great_Britain
+
+# ================================================================
+
 South Africa
+
+South Africa, officially the Republic of South Africa (RSA), is a country located in Southern Africa. It has 2,798 kilometres (1,739 mi) of coastline that stretches along the South Atlantic and Indian oceans.[9][10][11] To the north lie the neighbouring countries of Namibia, Botswana and Zimbabwe; to the east are Mozambique and Swaziland; and within it lies Lesotho, an enclave surrounded by South African territory.[12] South Africa is the 25th-largest country in the world by land area, and with close to 53 million people, is the world's 25th-most populous nation.
+
+https://en.wikipedia.org/wiki/South_Africa
+
+# ================================================================
+
 Brazil
+
+Brazil (Listeni/brəˈzɪl/; Portuguese: Brasil [bɾaˈziw]),[9] officially the Federative Republic of Brazil (Portuguese: República Federativa do Brasil, About this sound listen (help·info)),[10] is the largest country in both South America and the Latin American region. It is the world's fifth largest country, both by geographical area and by population.[11] It is the largest Portuguese-speaking country in the world, and the only one in the Americas.[12]
+
+https://en.wikipedia.org/wiki/Brazil
+
+# ================================================================
+
 Australia
+
+Australia (/ɒˈstreɪliə/, /ə-/, colloquially /-jə/),[10][11] officially the Commonwealth of Australia,[12] is an Oceanian country comprising the mainland of the Australian continent, the island of Tasmania, and numerous smaller islands. It is the world's sixth-largest country by total area. Neighbouring countries include Indonesia, East Timor and Papua New Guinea to the north; the Solomon Islands and Vanuatu to the north-east; and New Zealand to the south-east.
+
+https://en.wikipedia.org/wiki/Australia
