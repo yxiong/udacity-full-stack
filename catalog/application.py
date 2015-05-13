@@ -11,9 +11,8 @@ import os.path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-_this_file_dir = os.path.dirname(os.path.realpath(__file__))
-
 app = Flask(__name__)
+
 
 # Database configuration.
 engine = create_engine("sqlite:///catalog.db")
@@ -21,19 +20,25 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind = engine)
 session = DBSession()
 
+
 # Template configuration.
 jinjaEnv = jinja2.Environment(
-    loader = jinja2.FileSystemLoader(os.path.join(_this_file_dir, "templates"))
-)
+    loader = jinja2.FileSystemLoader("templates"))
+
+
+categories = []
+items = []
 
 
 @app.route('/')
 def IndexHandler():
-    category = session.query(Category).first()
-    items = session.query(Item).filter_by(category_id = category.cid)
+    category = categories[0]
     template = jinjaEnv.get_template("index.html")
-    return template.render(category = category, items = items)
+    return template.render(categories = categories, items = items)
 
 if __name__ == "__main__":
+    categories = session.query(Category).all()
+    items = session.query(Item).all()
+
     app.debug = True
     app.run(host = "0.0.0.0", port = 8000)

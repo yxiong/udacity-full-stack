@@ -28,6 +28,9 @@ class Category(Base):
     description = Column(UnicodeText)
     wiki_url = Column(String(255))
 
+    def short_description(self, n):
+        return abbrev_text(self.description, n)
+
     def __unicode__(self):
         abbrev_description = abbrev_text(self.description, 40)
         return u"{0}: {1}. {2} [{3}]".format(
@@ -48,6 +51,9 @@ class Item(Base):
     category_id = Column(Integer, ForeignKey("category.cid"))
 
     category = relationship(Category)
+
+    def short_description(self, n):
+        return abbrev_text(self.description, n)
 
     def __unicode__(self):
         abbrev_description = abbrev_text(self.description, 40)
