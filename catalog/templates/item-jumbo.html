@@ -1,8 +1,8 @@
 <h1>{{ item.name }}</h1>
 <h2>({{ item.category_name }})</h2>
 <p>{{ item.description }}</p>
-<p>
+<div>
   <a class="btn btn-info" role="button" href="{{ item.wiki_url }}">Wiki Page</a>
   <a class="btn btn-warning" role="button" href="{{ url_for('update_item', category_name=item.category_name, item_name=item.name) }}">Edit</a>
-  <a class="btn btn-danger" role="button" href="delete">Delete</a>
-</p>
+  <form style="display:inline;" action="{{ url_for('delete_item', category_name=item.category_name, item_name=item.name) }}" method="post"><button type="submit" class="btn btn-danger">Delete</button></form>
+</div>

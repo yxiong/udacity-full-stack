@@ -1,7 +1,7 @@
 <h1>{{ category.name }}</h1>
 <p>{{ category.description }}</p>
-<p>
+<div>
   <a class="btn btn-info" role="button" href="{{ category.wiki_url }}">Wiki Page</a>
   <a class="btn btn-warning" role="button" href="{{ url_for('update_category', category_name=category.name) }}">Edit</a>
-  <a class="btn btn-danger" role="button" href="delete">Delete</a>
-</p>
+  <form style="display:inline;" action="{{ url_for('delete_category', category_name=category.name) }}" method="post"><button type="submit" class="btn btn-danger">Delete</button></form>
+</div>

@@ -150,6 +150,29 @@ def update_item_post(category_name, item_name):
                             item_name = new_name))
 
 
+@app.route("/d/<category_name>", methods=["POST"])
+def delete_category(category_name):
+    for item in items[category_name].values():
+        session.delete(item)
+    del items[category_name]
+    category = categories[category_name]
+    session.delete(category)
+    session.commit()
+    del categories[category_name]
+    flash("The category '{0}' has been deleted.".format(category_name))
+    return redirect('/')
+
+@app.route("/d/<category_name>/<item_name>", methods=["POST"])
+def delete_item(category_name, item_name):
+    category = categories[category_name]
+    item = items[category_name][item_name]
+    session.delete(item)
+    session.commit()
+    del items[category_name][item_name]
+    flash("The item '{0}' has been deleted.".format(item_name))
+    return redirect(url_for('read_category', category_name = category_name))
+
+
 if __name__ == "__main__":
     for c in session.query(Category).all():
         categories[c.name] = c
