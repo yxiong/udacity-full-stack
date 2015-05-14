@@ -37,27 +37,23 @@
 
     <div class="container">
 
-      <div class="row row-offcanvas row-offcanvas-right">
+      <h2>Vertical (basic) form</h2>
 
-        <div class="col-xs-12 col-sm-9">
-          <p class="pull-right visible-xs">
-            <button type="button" class="btn btn-primary btn-xs" data-toggle="offcanvas">Toggle nav</button>
-          </p>
-          <div class="jumbotron">
-            {{ jumbotron | safe }}
-          </div>
-
-          <div class="row">
-            {% for a in abstracts %} {{ a | safe }} {% endfor %}
-          </div><!-- /.row -->
-        </div><!--/.col-xs-12.col-sm-9-->
-
-        <div class="col-xs-6 col-sm-3 sidebar-offcanvas" id="sidebar">
-          <div class="list-group">
-            {% for link in category_links %} {{ link | safe }} {% endfor %}
-          </div>
-        </div><!--/.sidebar-offcanvas-->
-      </div><!--/row-->
+      <form role="form">
+        <div class="form-group">
+          <label for="title">Title:</label>
+          <input type="text" class="form-control" id="title" value="Current email">
+        </div><!-- /.form-group -->
+        <div class="form-group">
+          <label for="description">Description:</label>
+          <textarea id="description" class="form-control" rows="20">Some descriptions already in here.</textarea>
+        </div><!-- /.form-group -->
+        <div class="form-group">
+          <label for="wiki">Wikipedia URL:</label>
+          <input type="text" class="form-control" id="wiki" value="http://wikipedia/foo/bar">
+        </div><!-- /.form-group -->
+        <button type="submit" class="btn btn-default">Submit</button>
+      </form>
 
       <hr>
 

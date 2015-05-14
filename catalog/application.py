@@ -4,8 +4,7 @@
 # Created: May 11, 2015.
 
 from database_setup import Base, Category, Item
-from flask import Flask
-import jinja2
+from flask import Flask, render_template
 import os
 import os.path
 from sqlalchemy import create_engine
@@ -21,70 +20,65 @@ DBSession = sessionmaker(bind = engine)
 session = DBSession()
 
 
-# Template configuration.
-jinjaEnv = jinja2.Environment(loader = jinja2.FileSystemLoader("templates"))
-
-
 categories = {}
 items = {}
 
 
-def render_category_link(category, is_active=False):
-    return '<a href="/{0}" class="list-group-item {1}">{0}</a>'.format(
-        category.name, is_active and "active" or "")
-
-
 @app.route("/")
-def IndexHandler():
-    jumbotron = jinjaEnv.get_template("index-jumbo.html").render()
-    abstract_template = jinjaEnv.get_template("item-abstract.html")
-    abstracts = [abstract_template.render(item=i)
+def home():
+    jumbotron = render_template("index-jumbo.html")
+    abstracts = [render_template("item-abstract.html", item=i)
                  for d in items.values() for i in d.values()]
-    category_links = [render_category_link(c) for c in categories.values()]
-    return jinjaEnv.get_template("view.html").render(
-        jumbotron = jumbotron,
-        abstracts = abstracts,
-        category_links = category_links
-    )
+    category_links = [render_template("category-link.html",
+                                      category=c, active=False)
+                      for c in categories.values()]
+    return render_template("view.html",
+                           jumbotron = jumbotron,
+                           abstracts = abstracts,
+                           category_links = category_links)
 
 
-@app.route("/<category_name>")
-def CategoryHandler(category_name):
+@app.route("/r/<category_name>")
+def read_category(category_name):
     if category_name not in categories:
         return "Not Found", 404
     category = categories[category_name]
-
-    jumbotron = jinjaEnv.get_template("category-jumbo.html").render(
-        category = category)
-
-    abstract_template = jinjaEnv.get_template("item-abstract.html")
-    abstracts = [abstract_template.render(item=i)
+    jumbotron = render_template("category-jumbo.html", category = category)
+    abstracts = [render_template("item-abstract.html", item=i)
                  for i in items[category_name].values()]
-
-    category_links = [render_category_link(c, c==category)
+    category_links = [render_template("category-link.html",
+                                      category=c, active=(c==category))
                       for c in categories.values()]
-
-    return jinjaEnv.get_template("view.html").render(
-        jumbotron = jumbotron,
-        abstracts = abstracts,
-        category_links = category_links
-    )
+    return render_template("view.html",
+                           jumbotron = jumbotron,
+                           abstracts = abstracts,
+                           category_links = category_links)
 
 
-@app.route("/<category_name>/<item_name>")
-def ItemHandler(category_name, item_name):
+@app.route("/r/<category_name>/<item_name>")
+def read_item(category_name, item_name):
     if category_name not in categories or item_name not in items[category_name]:
         return "Not Found", 404
     category = categories[category_name]
     item = items[category_name][item_name]
-    jumbotron = jinjaEnv.get_template("item-jumbo.html").render(item = item)
-    category_links = [render_category_link(c, c==category)
+    jumbotron = render_template("item-jumbo.html", item = item)
+    category_links = [render_template("category-link.html",
+                                      category=c, active=(c==category))
                       for c in categories.values()]
-    return jinjaEnv.get_template("view.html").render(
-        jumbotron = jumbotron,
-        abstracts = [],
-        category_links = category_links
-    )
+    return render_template("view.html",
+                           jumbotron = jumbotron,
+                           abstracts = [],
+                           category_links = category_links)
+
+
+@app.route("/u/<category_name>")
+def update_category(category_name):
+    return render_template("edit.html")
+
+
+@app.route("/u/<category_name>/<item_name>")
+def update_item(category_name, item_name):
+    return render_template("edit.html")
 
 
 if __name__ == "__main__":
