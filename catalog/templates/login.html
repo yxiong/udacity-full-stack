@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Catalog App">
+    <meta name="author" content="Ying Xiong">
+
+    <title>Catalog App</title>
+
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/offcanvas.css" rel="stylesheet">
+  </head>
+
+  <body>
+    <nav class="navbar navbar-fixed-top navbar-inverse">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Catalog App</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="/">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </div><!-- /.nav-collapse -->
+      </div><!-- /.container -->
+    </nav><!-- /.navbar -->
+
+    <div class="container">
+
+      <div id="signinButton">
+        <span class="g-signin"
+              data-scope="openid email"
+              data-clientid="924877529329-r1e2e4r112rvgvg7tqr6borecsgpirrg.apps.googleusercontent.com"
+              data-redirecturi="postmessage"
+              data-accesstype="offline"
+              data-cookiepolicy="single_host_origin"
+              data-callback="signInCallback"
+              data-approvalprompt="force"></span> <!-- TODO: remove "force" -->
+      </div>
+      <div id="result"></div>
+
+      <hr>
+
+      <footer>
+        <p>&copy; Ying Xiong 2015</p>
+      </footer>
+
+    </div><!--/.container-->
+
+    <script src="/static/js/jquery-1.11.3.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/offcanvas.js"></script>
+    <script src="https://apis.google.com/js/client:platform.js?onload=start"></script>
+    <script>
+     function signInCallback(authResult) {
+       if (authResult['code']) {
+         $('#signinButton').attr('style', 'display: none');
+         $.ajax({
+           type: 'POST',
+           url: '/gconnect?state={{ state }}',
+           processData: false,
+           contentType: 'application/octet-stream; charset=utf-8',
+           data: authResult['code'],
+           success: function(result) {
+             if (result) {
+               $('#result').html('Login Successful!<br/>' + result +
+                                 '<br/>Redirecting...');
+               setTimeout(function() { window.location.href = "/"; }, 1000);
+             }
+           }
+         });
+       } else if (authResult['error']) {
+         console.log('There was an error: ' + authResult['error']);
+       } else {
+         $('#result').html('Failed to make a server-side call. Check your confiuration and console.');
+       }
+     }
+    </script>
+  </body>
+</html>
