@@ -37,22 +37,31 @@
 
     <div class="container">
 
-      <h2>Vertical (basic) form</h2>
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-danger" role="alert">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
 
-      <form role="form">
+      <h2>{{ title }}</h2>
+
+      <form role="form" method="post">
         <div class="form-group">
-          <label for="title">Title:</label>
-          <input type="text" class="form-control" id="title" value="Current email">
+          <label for="name">Name:</label>
+          <input type="text" class="form-control" name="name" value="{{ entity.name }}">
         </div><!-- /.form-group -->
         <div class="form-group">
           <label for="description">Description:</label>
-          <textarea id="description" class="form-control" rows="20">Some descriptions already in here.</textarea>
+          <textarea name="description" class="form-control" rows="10">{{ entity.description }}</textarea>
         </div><!-- /.form-group -->
         <div class="form-group">
           <label for="wiki">Wikipedia URL:</label>
-          <input type="text" class="form-control" id="wiki" value="http://wikipedia/foo/bar">
+          <input type="text" class="form-control" name="wiki" value="{{ entity.wiki_url }}">
         </div><!-- /.form-group -->
-        <button type="submit" class="btn btn-default">Submit</button>
+        <button type="submit" class="btn btn-success">Submit</button>
+        <a class="btn btn-danger" href="{{ cancel_url }}">Cancel</a>
       </form>
 
       <hr>
