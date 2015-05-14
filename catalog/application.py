@@ -22,8 +22,7 @@ session = DBSession()
 
 
 # Template configuration.
-jinjaEnv = jinja2.Environment(
-    loader = jinja2.FileSystemLoader("templates"))
+jinjaEnv = jinja2.Environment(loader = jinja2.FileSystemLoader("templates"))
 
 
 categories = {}
@@ -35,36 +34,18 @@ def render_category_link(category, is_active=False):
         category.name, is_active and "active" or "")
 
 
-def render_category_info(category):
-    return u'<h1>{0}</h1><p>{1} <a href="{2}">[Wiki Page]</a></p>'.format(
-        category.name, category.description, category.wiki_url)
-
-def render_item_preview_div(item):
-    template = (
-        u'<div class="col-xs-6 col-lg-4">\n'
-        '  <h2>{0}</h2>\n'
-        '  <p>{1}</p>\n'
-        '  <p><a class="btn btn-default" href="#" role="button">'
-        'View details &raquo;</a></p>\n'
-        '</div><!--/.col-xs-6.col-lg-4-->'
-    )
-    return template.format(item.name, item.short_description(200))
-
-
 @app.route("/")
 def IndexHandler():
-    template = jinjaEnv.get_template("category.html")
-    category_links = [render_category_link(c) for c in categories.values()]
-    item_divs = [render_item_preview_div(i)
+    jumbotron = jinjaEnv.get_template("index-jumbo.html").render()
+    abstract_template = jinjaEnv.get_template("item-abstract.html")
+    abstracts = [abstract_template.render(item=i)
                  for d in items.values() for i in d.values()]
-    category_info = """<h1>Hello, world!</h1>
-    <p>In this project, we develop an application that provides a list
-    of items within a variety of categories as well as provide a user
-    registration and authentication system. Registered users will have
-    the ability to post, edit and delete their own items.</p>"""
-    return template.render(item_divs = item_divs,
-                           category_links = category_links,
-                           category_info = category_info)
+    category_links = [render_category_link(c) for c in categories.values()]
+    return jinjaEnv.get_template("view.html").render(
+        jumbotron = jumbotron,
+        abstracts = abstracts,
+        category_links = category_links
+    )
 
 
 @app.route("/<category_name>")
@@ -72,20 +53,38 @@ def CategoryHandler(category_name):
     if category_name not in categories:
         return "Not Found", 404
     category = categories[category_name]
-    template = jinjaEnv.get_template("category.html")
+
+    jumbotron = jinjaEnv.get_template("category-jumbo.html").render(
+        category = category)
+
+    abstract_template = jinjaEnv.get_template("item-abstract.html")
+    abstracts = [abstract_template.render(item=i)
+                 for i in items[category_name].values()]
+
     category_links = [render_category_link(c, c==category)
                       for c in categories.values()]
-    item_divs = [render_item_preview_div(i)
-                 for i in items[category_name].values()]
-    category_info = render_category_info(category)
-    return template.render(item_divs = item_divs,
-                           category_links = category_links,
-                           category_info = category_info)
+
+    return jinjaEnv.get_template("view.html").render(
+        jumbotron = jumbotron,
+        abstracts = abstracts,
+        category_links = category_links
+    )
 
 
-@app.route("/<category>/<item>")
-def ItemHandler(category, item):
-    return "Handling %s in %s" % (category, item)
+@app.route("/<category_name>/<item_name>")
+def ItemHandler(category_name, item_name):
+    if category_name not in categories or item_name not in items[category_name]:
+        return "Not Found", 404
+    category = categories[category_name]
+    item = items[category_name][item_name]
+    jumbotron = jinjaEnv.get_template("item-jumbo.html").render(item = item)
+    category_links = [render_category_link(c, c==category)
+                      for c in categories.values()]
+    return jinjaEnv.get_template("view.html").render(
+        jumbotron = jumbotron,
+        abstracts = [],
+        category_links = category_links
+    )
 
 
 if __name__ == "__main__":
@@ -94,6 +93,7 @@ if __name__ == "__main__":
     for item in session.query(Item).all():
         cname = [c for c in categories.values()
                  if c.cid == item.category_id][0].name
+        item.category_name = cname
         items.setdefault(cname, {})[item.name] = item
 
     app.debug = True

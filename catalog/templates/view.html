@@ -9,8 +9,8 @@
 
     <title>Catalog App</title>
 
-    <link href="static/css/bootstrap.min.css" rel="stylesheet">
-    <link href="static/css/offcanvas.css" rel="stylesheet">
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/offcanvas.css" rel="stylesheet">
   </head>
 
   <body>
@@ -44,11 +44,11 @@
             <button type="button" class="btn btn-primary btn-xs" data-toggle="offcanvas">Toggle nav</button>
           </p>
           <div class="jumbotron">
-            {{ category_info }}
+            {{ jumbotron }}
           </div>
 
           <div class="row">
-            {% for div in item_divs %} {{ div }} {% endfor %}
+            {% for a in abstracts %} {{ a }} {% endfor %}
           </div><!-- /.row -->
         </div><!--/.col-xs-12.col-sm-9-->
 
@@ -67,8 +67,8 @@
 
     </div><!--/.container-->
 
-    <script src="static/js/jquery-1.11.3.min.js"></script>
-    <script src="static/js/bootstrap.min.js"></script>
-    <script src="static/js/offcanvas.js"></script>
+    <script src="/static/js/jquery-1.11.3.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/offcanvas.js"></script>
   </body>
 </html>
