@@ -40,6 +40,67 @@ def home():
                            category_links = category_links)
 
 
+@app.route("/c/category")
+def create_category():
+    category = Category(name="Category name",
+                        description="Add some description.",
+                        wiki_url = "Wikipedia url")
+    return render_template("edit.html",
+                           title = "Create a category.",
+                           entity = category,
+                           cancel_url = '/')
+
+
+@app.route("/c/category", methods=["POST"])
+def create_category_post():
+    name = request.form["name"]
+    if name in categories:
+        flash("The category name '{0}' already exists.".format(name))
+        return redirect(url_for('create_category'))
+    category = Category(name=name,
+                        description = request.form["description"],
+                        wiki_url = request.form["wiki"])
+    categories[name] = category
+    items[name] = {}
+    session.add(category)
+    session.commit()
+    flash("The category has been added.")
+    return redirect(url_for('read_category', category_name = name))
+
+
+@app.route("/c/<category_name>/item")
+def create_item(category_name):
+    item = Item(name="Item name",
+                description="Add some description.",
+                wiki_url = "Wikipedia url")
+    cancel_url = url_for('read_category', category_name = category_name)
+    return render_template("edit.html",
+                           title = "Create an item.",
+                           entity = item,
+                           cancel_url = cancel_url)
+
+
+@app.route("/c/<category_name>/item", methods=["POST"])
+def create_item_post(category_name):
+    name = request.form["name"]
+    if name in items[category_name]:
+        flash("The item name '{0}' already exists in this category.".format(
+            name))
+        return redirect(url_for('create_item', category_name=category_name))
+    item = Item(name=name,
+                description = request.form["description"],
+                wiki_url = request.form["wiki"],
+                category = categories[category_name])
+    item.category_name = category_name
+    items[category_name][name] = item
+    session.add(item)
+    session.commit()
+    flash("The item has been added.")
+    return redirect(url_for('read_item',
+                            category_name = category_name,
+                            item_name = name))
+
+
 @app.route("/r/<category_name>")
 def read_category(category_name):
     if category_name not in categories:
@@ -131,7 +192,8 @@ def update_item_post(category_name, item_name):
     new_name = request.form["name"]
     if old_name != new_name:
         if new_name in items[category_name]:
-            flash("The item name '{0}' already exists.".format(new_name))
+            flash("The item name '{0}' already exists in this category.".format(
+                new_name))
             return redirect(url_for('update_item',
                                     category_name = category_name,
                                     item_name = item_name))
@@ -161,6 +223,7 @@ def delete_category(category_name):
     del categories[category_name]
     flash("The category '{0}' has been deleted.".format(category_name))
     return redirect('/')
+
 
 @app.route("/d/<category_name>/<item_name>", methods=["POST"])
 def delete_item(category_name, item_name):
