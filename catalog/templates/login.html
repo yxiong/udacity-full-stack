@@ -37,6 +37,7 @@
 
     <div class="container">
 
+      <div id="result" class="alert" role="alert"></div>
       <div id="signinButton">
         <span class="g-signin"
               data-scope="openid email"
@@ -47,7 +48,6 @@
               data-callback="signInCallback"
               data-approvalprompt="force"></span> <!-- TODO: remove "force" -->
       </div>
-      <div id="result"></div>
 
       <hr>
 
@@ -60,11 +60,15 @@
     <script src="/static/js/jquery-1.11.3.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
     <script src="/static/js/offcanvas.js"></script>
-    <script src="https://apis.google.com/js/client:platform.js?onload=start"></script>
+    <script src="https://apis.google.com/js/client:platform.js?onload=start" async defer></script>
     <script>
      function signInCallback(authResult) {
        if (authResult['code']) {
+         // Hide the sign-in button now that the user is authorized.
          $('#signinButton').attr('style', 'display: none');
+         // Send the one-time-use code to the server. If the server responds,
+         // write a message to the web page and then redirect back to the home
+         // page.
          $.ajax({
            type: 'POST',
            url: '/gconnect?state={{ state }}',
@@ -72,11 +76,14 @@
            contentType: 'application/octet-stream; charset=utf-8',
            data: authResult['code'],
            success: function(result) {
+             console.log(result);
              if (result) {
-               $('#result').html('Login Successful!<br/>' + result +
-                                 '<br/>Redirecting...');
+               $('#result').removeClass('alert-danger').addClass('alert-success').html(result + ' Redirecting...');
                setTimeout(function() { window.location.href = "/"; }, 1000);
              }
+           },
+           error: function(result) {
+             $('#result').removeClass('alert-success').addClass('alert-danger').html(result.responseText);
            }
          });
        } else if (authResult['error']) {

@@ -6,7 +6,6 @@
 from database_setup import Base, Category, Item
 from flask import Flask
 from flask import render_template, url_for, request, redirect, flash
-from flask import make_response
 from flask import session as login_session
 import httplib2
 import json
@@ -14,14 +13,14 @@ from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
 import os
 import os.path
-import random
 import requests
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import string
+
 
 app = Flask(__name__)
-app.secret_key = "secret"  # TODO
+# Secret key generated with `os.urandom(24)`.
+app.secret_key = '\x8bu\xc5\x87\x07$4\x83\xcbz\xfaB %\xc8\xf9A\xe2J=\x0e/"#'
 
 
 # Database configuration.
@@ -32,9 +31,15 @@ DBSession = sessionmaker(bind = engine)
 db_session = DBSession()
 
 
-CLIENT_ID = json.loads(
+# Google+ authentication configuration.
+client_secrets = json.loads(
     open("client_secrets.json", 'r').read())['web']['client_id']
 
+
+# We use two in-memory dictionaries to cache the catalog data used by this
+# app. They are read from the database when the app starts. When the user makes
+# and update request, the update is both pushed into database and ...
+# TODO (not done yet).
 categories = {}
 items = {}
 
@@ -55,70 +60,64 @@ def home():
 
 @app.route("/login")
 def login():
-    state = "".join(random.choice(string.ascii_uppercase + string.digits)
-                    for x in xrange(32))
+    state = os.urandom(16).encode('hex')
     login_session["state"] = state
     return render_template("login.html", state=state)
 
 
 @app.route("/gconnect", methods=['POST'])
 def gconnect():
+    # Make sure the user is the one who made the login request by checking if
+    # he/she has the correct 'state' we gave them.
     if request.args.get("state") != login_session["state"]:
-        response = make_response(json.dumps("Invalid state parameter", 401))
-        response.headers["Content-Type"] = "application/json"
-        return response
+        return "Invalid state parameter", 401
+    # Get the one-time-use code.
     code = request.data
     try:
+        # Give the one-time-use authroization code to Google in exchange for a
+        # credentials object.
         oauth_flow = flow_from_clientsecrets("client_secrets.json", scope="")
         oauth_flow.redirect_uri = "postmessage"
         credentials = oauth_flow.step2_exchange(code)
     except FlowExchangeError:
-        response = make_response(json.dumps(
-            "Failed to upgrade the authorization code."), 401)
-        response.headers["Content-Type"] = "application/json"
-        return response
+        return "Failed to verify the authorization code.", 401
+    # Get the access token from the credentials object and check if it is valid.
     access_token = credentials.access_token
     url = ("https://www.googleapis.com/oauth2/v1/tokeninfo?"
            "access_token={0}".format(access_token))
     h = httplib2.Http()
     result = json.loads(h.request(url, "GET")[1])
     if result.get("error") is not None:
-        response = make_response(json.dump(result.get('error')), 500)
-        response.headers["Content-Type"] = "application/json"
-        return response
+        # The access token we get from Google is invalid for some reason
+        # (probably not our or user's fault).
+        return json.dumps(result.get('error')), 500
+    # Verify that the access token is used for the intended user and is valid
+    # for this app.
     gplus_id = credentials.id_token["sub"]
     if result["user_id"] != gplus_id:
-        response = make_response(json.dumps(
-            "Token's user ID doesn't match given user ID"), 401)
-        response.headers["Content-Type"] = "application/json"
-        return response
-    if result["issued_to"] != CLIENT_ID:
-        response = make_response(json.dumps(
-            "Token's client ID does not match app's."), 401)
-        response.headers["Content-Type"] = "application/json"
-        return response
+        return "Token's user ID doesn't match given user ID", 401
+    if result["issued_to"] != client_secrets:
+        return "Token's client ID does not match app's.", 401
+    # Check if the user is already logged in.
     stored_gplus_id = login_session.get("gplus_id")
     if gplus_id == stored_gplus_id:
-        response = make_response(json.dumps(
-            "Current user is already connected."), 200)
-        response.headers["Content-Type"] = "application/json"
-        return response
-
+        flash("You already logged in as {0}".format(login_session["username"]))
+        return "Current user is already logged in.", 200
+    # Store the access toekn in the session for later use.
+    login_session["access_token"] = access_token
     login_session["gplus_id"] = gplus_id
-
+    # Get user info.
     userinfo_url = "https://www.googleapis.com/oauth2/v1/userinfo"
     params = {"access_token": credentials.access_token, "alt":"json"}
     answer = requests.get(userinfo_url, params = params)
     data = json.loads(answer.text)
-
+    # Store the interested info into session.
     login_session["username"] = data["name"]
     login_session["picture"] = data["picture"]
     login_session["email"] = data["email"]
-
+    # Logged in successfully.
     flash("You are now logged in as {0}".format(login_session["username"]))
-    response = make_response(json.dumps("Logged in successfully."), 200)
-    response.headers["Content-Type"] = "application/json"
-    return response
+    return "Logged in successfully.", 200
 
 
 @app.route("/c/category")
