@@ -120,8 +120,35 @@ def gconnect():
     return "Logged in successfully.", 200
 
 
+@app.route("/gdisconnect")
+def gdisconnect():
+    # Check if the user is connected, i.e. if the user has an access token.
+    access_token = login_session.get("access_token")
+    if access_token is None:
+        return "Current user is not connected.", 401
+    # Execute HTTP GET request to revoke current token.
+    url = ("https://accounts.google.com/o/oauth2/revoke?"
+           "token={0}".format(access_token))
+    h = httplib2.Http()
+    result = h.request(url, "GET")[0]
+    if result["status"] == "200":
+        # Reset the user's session if the request is successful.
+        del login_session["access_token"]
+        del login_session["gplus_id"]
+        del login_session["username"]
+        del login_session["picture"]
+        del login_session["email"]
+        return "Successfully disconnected.", 200
+    else:
+        # For some unknown reason, the token was invalid or cannot be
+        # disconnected at this time.
+        return "Failed to revoke token for given user.", 400
+
+
 @app.route("/c/category")
 def create_category():
+    if "username" not in login_session:
+        return redirect("/login")
     category = Category(name="Category name",
                         description="Add some description.",
                         wiki_url = "Wikipedia url")
@@ -133,6 +160,8 @@ def create_category():
 
 @app.route("/c/category", methods=["POST"])
 def create_category_post():
+    if "username" not in login_session:
+        return redirect("/login")
     name = request.form["name"]
     if name in categories:
         flash("The category name '{0}' already exists.".format(name))
@@ -150,6 +179,8 @@ def create_category_post():
 
 @app.route("/c/<category_name>/item")
 def create_item(category_name):
+    if "username" not in login_session:
+        return redirect("/login")
     item = Item(name="Item name",
                 description="Add some description.",
                 wiki_url = "Wikipedia url")
@@ -216,6 +247,8 @@ def read_item(category_name, item_name):
 
 @app.route("/u/<category_name>", methods=["GET"])
 def update_category(category_name):
+    if "username" not in login_session:
+        return redirect("/login")
     category = categories[category_name]
     cancel_url = url_for('read_category', category_name = category_name)
     return render_template("edit.html",
@@ -226,6 +259,8 @@ def update_category(category_name):
 
 @app.route("/u/<category_name>", methods=["POST"])
 def update_category_post(category_name):
+    if "username" not in login_session:
+        return redirect("/login")
     category = categories[category_name]
     old_name = category.name
     new_name = request.form["name"]
@@ -254,6 +289,8 @@ def update_category_post(category_name):
 
 @app.route("/u/<category_name>/<item_name>")
 def update_item(category_name, item_name):
+    if "username" not in login_session:
+        return redirect("/login")
     item = items[category_name][item_name]
     cancel_url = url_for('read_item',
                          category_name = category_name,
@@ -266,6 +303,8 @@ def update_item(category_name, item_name):
 
 @app.route("/u/<category_name>/<item_name>", methods=["POST"])
 def update_item_post(category_name, item_name):
+    if "username" not in login_session:
+        return redirect("/login")
     category = categories[category_name]
     item = items[category_name][item_name]
     old_name = item.name
@@ -294,6 +333,8 @@ def update_item_post(category_name, item_name):
 
 @app.route("/d/<category_name>", methods=["POST"])
 def delete_category(category_name):
+    if "username" not in login_session:
+        return redirect("/login")
     for item in items[category_name].values():
         db_session.delete(item)
     del items[category_name]
@@ -307,6 +348,8 @@ def delete_category(category_name):
 
 @app.route("/d/<category_name>/<item_name>", methods=["POST"])
 def delete_item(category_name, item_name):
+    if "username" not in login_session:
+        return redirect("/login")
     category = categories[category_name]
     item = items[category_name][item_name]
     db_session.delete(item)
