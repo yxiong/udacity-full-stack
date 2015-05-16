@@ -36,16 +36,25 @@ client_secrets = json.loads(
     open("client_secrets.json", 'r').read())['web']['client_id']
 
 
-# We use two in-memory dictionaries to cache the catalog data used by this
-# app. They are read from the database when the app starts. When the user makes
-# and update request, the update is both pushed into database and ...
-# TODO (not done yet).
+# We use two in-memory dictionaries to cache the catalog data used by this app,
+# which are read from the database when the app starts. When the user makes a
+# create/update/delete request, we modify both the in-memory dictionaries as
+# well as the underlying database and keep the two consistent all the time.
+#
+# The `categories` is a dictionary whose key is a the category name (which
+# should be unique) and value is a `Category` object.
+#
+# The `items` is a dictionary of dictionary. For outer dictionary, the key is
+# still category name, and for inner dictionary, the key is item name (which
+# should be unique within a category) and value is an `Item` object. In other
+# word, to access an item, use `items[category_name][item_name]`.
 categories = {}
 items = {}
 
 
 @app.route("/")
 def home():
+    """Render the home page."""
     jumbotron = render_template("index-jumbo.html")
     abstracts = [render_template("item-abstract.html", item=i)
                  for d in items.values() for i in d.values()]
@@ -60,6 +69,7 @@ def home():
 
 @app.route("/login")
 def login():
+    """Render the login page."""
     state = os.urandom(16).encode('hex')
     login_session["state"] = state
     return render_template("login.html", state=state)
@@ -67,6 +77,7 @@ def login():
 
 @app.route("/gconnect", methods=['POST'])
 def gconnect():
+    """Handle request to connect with a Google+ account."""
     # Make sure the user is the one who made the login request by checking if
     # he/she has the correct 'state' we gave them.
     if request.args.get("state") != login_session["state"]:
@@ -122,6 +133,7 @@ def gconnect():
 
 @app.route("/gdisconnect")
 def gdisconnect():
+    """Disconnect user's Google+ account."""
     # Check if the user is connected, i.e. if the user has an access token.
     access_token = login_session.get("access_token")
     if access_token is None:
@@ -164,7 +176,7 @@ def create_category_post():
         return redirect("/login")
     name = request.form["name"]
     if name in categories:
-        flash("The category name '{0}' already exists.".format(name))
+        flash("Error: The category name '{0}' already exists.".format(name))
         return redirect(url_for('create_category'))
     category = Category(name=name,
                         description = request.form["description"],
@@ -195,8 +207,8 @@ def create_item(category_name):
 def create_item_post(category_name):
     name = request.form["name"]
     if name in items[category_name]:
-        flash("The item name '{0}' already exists in this category.".format(
-            name))
+        flash("Error: The item name '{0}' already exists"
+              "in this category.".format(name))
         return redirect(url_for('create_item', category_name=category_name))
     item = Item(name=name,
                 description = request.form["description"],
@@ -266,7 +278,8 @@ def update_category_post(category_name):
     new_name = request.form["name"]
     if old_name != new_name:
         if new_name in categories:
-            flash("The category name '{0}' already exists.".format(new_name))
+            flash("Error: The category name '{0}' already exists.".format(
+                new_name))
             return redirect(url_for('update_category',
                                     category_name = old_name))
 
@@ -311,8 +324,8 @@ def update_item_post(category_name, item_name):
     new_name = request.form["name"]
     if old_name != new_name:
         if new_name in items[category_name]:
-            flash("The item name '{0}' already exists in this category.".format(
-                new_name))
+            flash("Error: The item name '{0}' already exists"
+                  "in this category.".format(new_name))
             return redirect(url_for('update_item',
                                     category_name = category_name,
                                     item_name = item_name))
