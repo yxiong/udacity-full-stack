@@ -19,7 +19,7 @@
     <div class="list-group">
       {% for link in category_links %} {{ link | safe }} {% endfor %}
     </div>
-    <a class="btn btn-success" role="button" href="{{ url_for('create_category') }}">Add a category</a>
+    <a class="btn btn-success" role="button" href="{{ url_for('create_category') }}" {% if "username" not in session %} disabled {% endif %}>Add a category</a>
   </div><!--/.sidebar-offcanvas-->
 </div><!--/row-->
 {% endblock %}

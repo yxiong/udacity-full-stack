@@ -2,7 +2,24 @@
 <h2>({{ item.category_name }})</h2>
 <p>{{ item.description }}</p>
 <div>
-  <a class="btn btn-info" role="button" href="{{ item.wiki_url }}">Wiki Page</a>
-  <a class="btn btn-warning" role="button" href="{{ url_for('update_item', category_name=item.category_name, item_name=item.name) }}">Edit</a>
-  <form style="display:inline;" action="{{ url_for('delete_item', category_name=item.category_name, item_name=item.name) }}" method="post"><button type="submit" class="btn btn-danger">Delete</button></form>
+  <a class="btn btn-primary" role="button"
+     href="{{ item.wiki_url }}">
+    Wiki Page
+  </a>
+
+  <a class="btn btn-warning"
+     role="button"
+     href="{{ url_for('update_item', category_name=item.category_name, item_name=item.name) }}"
+     {% if "username" not in session %} disabled {% endif %}>
+    Edit
+  </a>
+
+  <form style="display:inline;"
+        action="{{ url_for('delete_item', category_name=item.category_name, item_name=item.name) }}"
+        method="post">
+    <button type="submit" class="btn btn-danger"
+            {% if "username" not in session %} disabled {% endif %}>
+      Delete
+    </button>
+  </form>
 </div>

@@ -30,8 +30,8 @@
         </div>
         <div id="navbar" class="collapse navbar-collapse">
           {% if "username" in session %}
-            <form class="navbar-form navbar-right" action="{{ url_for('login') }}">
-              <button type="submit" class="btn btn-danger">Sign out</button>
+            <form class="navbar-form navbar-right">
+              <button class="btn btn-danger" onclick="signOutCallback(); return false;">Sign out</button>
             </form><!-- /.navform -->
             <ul class="nav navbar-nav navbar-right">
               <li><a href="">{{ session["username"] }}</a></li>
@@ -57,6 +57,7 @@
           {% endfor %}
         {% endif %}
       {% endwith %}
+      <div id="signOutMessage"></div>
       {% endblock %}
 
       {% block main %}
@@ -70,8 +71,28 @@
 
     </div><!--/.container-->
 
+    {% block scripts %}
     <script src="/static/js/jquery-1.11.3.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
     <script src="/static/js/offcanvas.js"></script>
+    <script>
+      function signOutCallback() {
+        $.ajax({
+          type: 'GET',
+          url: '/gdisconnect',
+          processData: false,
+          success: function(result) {
+            if (result) {
+              $('#signOutMessage').removeClass('alert-danger').addClass('alert alert-success').html(result + ' Redirecting...');
+              setTimeout(function() { window.location.href = "/"; }, 1000);
+            }
+          },
+          error: function(result) {
+            $('#signOutMessage').removeClass('alert-success').addClass('alert alert-danger').html(result.responseText);
+          }
+        });
+      }
+    </script>
+    {% endblock %}
   </body>
 </html>

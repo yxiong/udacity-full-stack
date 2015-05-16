@@ -1,8 +1,29 @@
 <h1>{{ category.name }}</h1>
 <p>{{ category.description }}</p>
 <div>
-  <a class="btn btn-info" role="button" href="{{ category.wiki_url }}">Wiki Page</a>
-  <a class="btn btn-success" role="button" href="{{ url_for('create_item', category_name=category.name) }}">Add an item</a>
-  <a class="btn btn-warning" role="button" href="{{ url_for('update_category', category_name=category.name) }}">Edit</a>
-  <form style="display:inline;" action="{{ url_for('delete_category', category_name=category.name) }}" method="post"><button type="submit" class="btn btn-danger">Delete</button></form>
+  <a class="btn btn-primary" role="button"
+     href="{{ category.wiki_url }}">
+    Wiki Page
+  </a>
+
+  <a class="btn btn-success" role="button"
+     href="{{ url_for('create_item', category_name=category.name) }}"
+     {% if "username" not in session %} disabled {% endif %}>
+    Add an item
+  </a>
+
+  <a class="btn btn-warning" role="button"
+     href="{{ url_for('update_category', category_name=category.name) }}"
+     {% if "username" not in session %} disabled {% endif %}>
+    Edit
+  </a>
+
+  <form style="display:inline;"
+        action="{{ url_for('delete_category', category_name=category.name) }}"
+        method="post">
+    <button type="submit" class="btn btn-danger"
+            {% if "username" not in session %} disabled {% endif %}>
+      Delete
+    </button>
+  </form>
 </div>

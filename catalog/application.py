@@ -150,11 +150,12 @@ def gdisconnect():
         del login_session["username"]
         del login_session["picture"]
         del login_session["email"]
+        flash("You have successfully signed out.")
         return "Successfully disconnected.", 200
     else:
         # For some unknown reason, the token was invalid or cannot be
         # disconnected at this time.
-        return "Failed to revoke token for given user.", 400
+        return "Error: Failed to revoke token for given user.", 400
 
 
 @app.route("/c/category")
