@@ -160,11 +160,12 @@ def gdisconnect():
 
 @app.route("/c/category")
 def create_category():
+    """Render create category page."""
     if "username" not in login_session:
         return redirect("/login")
     category = Category(name="Category name",
                         description="Add some description.",
-                        wiki_url = "Wikipedia url")
+                        wiki_url = "http://www.wikipedia.org/xxx")
     return render_template("edit.html",
                            title = "Create a category.",
                            entity = category,
@@ -173,30 +174,35 @@ def create_category():
 
 @app.route("/c/category", methods=["POST"])
 def create_category_post():
+    """Handle create category request."""
     if "username" not in login_session:
         return redirect("/login")
     name = request.form["name"]
+    # Make sure the category name does not already exist.
     if name in categories:
         flash("Error: The category name '{0}' already exists.".format(name))
         return redirect(url_for('create_category'))
+    # Create a `Category` object and add into database.
     category = Category(name=name,
                         description = request.form["description"],
                         wiki_url = request.form["wiki"])
-    categories[name] = category
-    items[name] = {}
     db_session.add(category)
     db_session.commit()
+    # Update in-memory cache.
+    categories[name] = category
+    items[name] = {}
     flash("The category has been added.")
     return redirect(url_for('read_category', category_name = name))
 
 
 @app.route("/c/<category_name>/item")
 def create_item(category_name):
+    """Render create item page."""
     if "username" not in login_session:
         return redirect("/login")
     item = Item(name="Item name",
                 description="Add some description.",
-                wiki_url = "Wikipedia url")
+                wiki_url = "http://www.wikipedia.org/xxx")
     cancel_url = url_for('read_category', category_name = category_name)
     return render_template("edit.html",
                            title = "Create an item.",
@@ -206,19 +212,23 @@ def create_item(category_name):
 
 @app.route("/c/<category_name>/item", methods=["POST"])
 def create_item_post(category_name):
+    """Handle create item request."""
     name = request.form["name"]
+    # Make sure the item name does not exist in the same category.
     if name in items[category_name]:
         flash("Error: The item name '{0}' already exists"
               "in this category.".format(name))
         return redirect(url_for('create_item', category_name=category_name))
+    # Create an `Item` object and add into database.
     item = Item(name=name,
                 description = request.form["description"],
                 wiki_url = request.form["wiki"],
                 category = categories[category_name])
-    item.category_name = category_name
-    items[category_name][name] = item
     db_session.add(item)
     db_session.commit()
+    # Update in-memory cache.
+    item.category_name = category_name
+    items[category_name][name] = item
     flash("The item has been added.")
     return redirect(url_for('read_item',
                             category_name = category_name,
@@ -227,6 +237,7 @@ def create_item_post(category_name):
 
 @app.route("/r/<category_name>")
 def read_category(category_name):
+    """Render read category page."""
     if category_name not in categories:
         return "Not Found", 404
     category = categories[category_name]
@@ -244,6 +255,7 @@ def read_category(category_name):
 
 @app.route("/r/<category_name>/<item_name>")
 def read_item(category_name, item_name):
+    """Render read item page."""
     if category_name not in categories or item_name not in items[category_name]:
         return "Not Found", 404
     category = categories[category_name]
@@ -260,6 +272,7 @@ def read_item(category_name, item_name):
 
 @app.route("/u/<category_name>", methods=["GET"])
 def update_category(category_name):
+    """Render update category page."""
     if "username" not in login_session:
         return redirect("/login")
     category = categories[category_name]
@@ -272,27 +285,29 @@ def update_category(category_name):
 
 @app.route("/u/<category_name>", methods=["POST"])
 def update_category_post(category_name):
+    """Handle update category request."""
     if "username" not in login_session:
         return redirect("/login")
     category = categories[category_name]
+    # Check if the category name has changed.
     old_name = category.name
     new_name = request.form["name"]
     if old_name != new_name:
+        # Make sure the new name does not already exist.
         if new_name in categories:
             flash("Error: The category name '{0}' already exists.".format(
                 new_name))
             return redirect(url_for('update_category',
                                     category_name = old_name))
-
+        # Update the in-memory cache about the category name change.
         items[new_name] = items[old_name]
         del items[old_name]
         for item in items[new_name].values():
             item.category_name = new_name
-
         categories[new_name] = categories[old_name]
         del categories[old_name]
         category.name = new_name
-
+    # Update description and wiki url, and update into database.
     category.description = request.form["description"]
     category.wiki_url = request.form["wiki"]
     db_session.add(category)
@@ -303,6 +318,7 @@ def update_category_post(category_name):
 
 @app.route("/u/<category_name>/<item_name>")
 def update_item(category_name, item_name):
+    """Render update item page."""
     if "username" not in login_session:
         return redirect("/login")
     item = items[category_name][item_name]
@@ -317,24 +333,27 @@ def update_item(category_name, item_name):
 
 @app.route("/u/<category_name>/<item_name>", methods=["POST"])
 def update_item_post(category_name, item_name):
+    """Handle update item request."""
     if "username" not in login_session:
         return redirect("/login")
     category = categories[category_name]
     item = items[category_name][item_name]
+    # Check if the item name has changed.
     old_name = item.name
     new_name = request.form["name"]
     if old_name != new_name:
+        # Make sure the new name does not already exist in this category.
         if new_name in items[category_name]:
             flash("Error: The item name '{0}' already exists"
                   "in this category.".format(new_name))
             return redirect(url_for('update_item',
                                     category_name = category_name,
                                     item_name = item_name))
-
+        # Update the in-memory cache about the item name change.
         items[category_name][new_name] = items[category_name][old_name]
         del items[category_name][old_name]
         item.name = new_name
-
+    # Update description and wiki url and update into database.
     item.description = request.form["description"]
     item.wiki_url = request.form["wiki"]
     db_session.add(item)
@@ -347,11 +366,14 @@ def update_item_post(category_name, item_name):
 
 @app.route("/d/<category_name>", methods=["POST"])
 def delete_category(category_name):
+    """Handle delete category request."""
     if "username" not in login_session:
         return redirect("/login")
+    # First delete the items inside the category.
     for item in items[category_name].values():
         db_session.delete(item)
     del items[category_name]
+    # Then delete the category itself.
     category = categories[category_name]
     db_session.delete(category)
     db_session.commit()
@@ -362,18 +384,22 @@ def delete_category(category_name):
 
 @app.route("/d/<category_name>/<item_name>", methods=["POST"])
 def delete_item(category_name, item_name):
+    """Handle delete item request."""
     if "username" not in login_session:
         return redirect("/login")
+    # Delete the item from the database.
     category = categories[category_name]
     item = items[category_name][item_name]
     db_session.delete(item)
     db_session.commit()
+    # Delete from the in-memory cache as well.
     del items[category_name][item_name]
     flash("The item '{0}' has been deleted.".format(item_name))
     return redirect(url_for('read_category', category_name = category_name))
 
 
 if __name__ == "__main__":
+    # Read the categories and items from database into memory.
     for c in db_session.query(Category).all():
         categories[c.name] = c
     for item in db_session.query(Item).all():
