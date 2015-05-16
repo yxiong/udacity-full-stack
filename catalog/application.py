@@ -7,6 +7,7 @@ from database_setup import Base, Category, Item
 from flask import Flask
 from flask import render_template, url_for, request, redirect, flash, jsonify
 from flask import session as login_session
+from functools import wraps
 import httplib2
 import json
 from oauth2client.client import flow_from_clientsecrets
@@ -158,11 +159,19 @@ def gdisconnect():
         return "Error: Failed to revoke token for given user.", 400
 
 
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kw):
+        if "username" not in login_session:
+            return redirect(url_for('login'))
+        return f(*args, **kw)
+    return decorated_function
+
+
 @app.route("/c/category")
+@login_required
 def create_category():
     """Render create category page."""
-    if "username" not in login_session:
-        return redirect("/login")
     category = Category(name="Category name",
                         description="Add some description.",
                         wiki_url = "http://www.wikipedia.org/xxx")
@@ -173,10 +182,9 @@ def create_category():
 
 
 @app.route("/c/category", methods=["POST"])
+@login_required
 def create_category_post():
     """Handle create category request."""
-    if "username" not in login_session:
-        return redirect("/login")
     name = request.form["name"]
     # Make sure the category name does not already exist.
     if name in categories:
@@ -196,10 +204,9 @@ def create_category_post():
 
 
 @app.route("/c/<category_name>/item")
+@login_required
 def create_item(category_name):
     """Render create item page."""
-    if "username" not in login_session:
-        return redirect("/login")
     item = Item(name="Item name",
                 description="Add some description.",
                 wiki_url = "http://www.wikipedia.org/xxx")
@@ -211,6 +218,7 @@ def create_item(category_name):
 
 
 @app.route("/c/<category_name>/item", methods=["POST"])
+@login_required
 def create_item_post(category_name):
     """Handle create item request."""
     name = request.form["name"]
@@ -271,10 +279,9 @@ def read_item(category_name, item_name):
 
 
 @app.route("/u/<category_name>", methods=["GET"])
+@login_required
 def update_category(category_name):
     """Render update category page."""
-    if "username" not in login_session:
-        return redirect("/login")
     category = categories[category_name]
     cancel_url = url_for('read_category', category_name = category_name)
     return render_template("edit.html",
@@ -284,10 +291,9 @@ def update_category(category_name):
 
 
 @app.route("/u/<category_name>", methods=["POST"])
+@login_required
 def update_category_post(category_name):
     """Handle update category request."""
-    if "username" not in login_session:
-        return redirect("/login")
     category = categories[category_name]
     # Check if the category name has changed.
     old_name = category.name
@@ -317,10 +323,9 @@ def update_category_post(category_name):
 
 
 @app.route("/u/<category_name>/<item_name>")
+@login_required
 def update_item(category_name, item_name):
     """Render update item page."""
-    if "username" not in login_session:
-        return redirect("/login")
     item = items[category_name][item_name]
     cancel_url = url_for('read_item',
                          category_name = category_name,
@@ -332,10 +337,9 @@ def update_item(category_name, item_name):
 
 
 @app.route("/u/<category_name>/<item_name>", methods=["POST"])
+@login_required
 def update_item_post(category_name, item_name):
     """Handle update item request."""
-    if "username" not in login_session:
-        return redirect("/login")
     category = categories[category_name]
     item = items[category_name][item_name]
     # Check if the item name has changed.
@@ -365,10 +369,9 @@ def update_item_post(category_name, item_name):
 
 
 @app.route("/d/<category_name>", methods=["POST"])
+@login_required
 def delete_category(category_name):
     """Handle delete category request."""
-    if "username" not in login_session:
-        return redirect("/login")
     # First delete the items inside the category.
     for item in items[category_name].values():
         db_session.delete(item)
@@ -383,10 +386,9 @@ def delete_category(category_name):
 
 
 @app.route("/d/<category_name>/<item_name>", methods=["POST"])
+@login_required
 def delete_item(category_name, item_name):
     """Handle delete item request."""
-    if "username" not in login_session:
-        return redirect("/login")
     # Delete the item from the database.
     category = categories[category_name]
     item = items[category_name][item_name]
