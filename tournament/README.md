@@ -17,7 +17,7 @@ them up in matches in a tournament.
        psql tournament -f /vagrant/tournament/tournament.sql
        ```
 
-2. Log in to the virtual machine with `vagrant ssh`, and then go to
+2. Log into the virtual machine with `vagrant ssh`, and then go to
    `/vagrant/tournament` directory.
 
 3. Run the test with `python tournament_test.py`.
