@@ -17,6 +17,7 @@
   <form style="display:inline;"
         action="{{ url_for('delete_item', category_name=item.category_name, item_name=item.name) }}"
         method="post">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
     <button type="submit" class="btn btn-danger"
             {% if "username" not in session %} disabled {% endif %}>
       Delete

@@ -7,6 +7,7 @@ from database_setup import Base, Category, Item
 from flask import Flask
 from flask import render_template, url_for, request, redirect, flash, jsonify
 from flask import session as login_session
+from flask.ext.seasurf import SeaSurf
 from functools import wraps
 import httplib2
 import json
@@ -22,6 +23,7 @@ from sqlalchemy.orm import sessionmaker
 app = Flask(__name__)
 # Secret key generated with `os.urandom(24)`.
 app.secret_key = '\x8bu\xc5\x87\x07$4\x83\xcbz\xfaB %\xc8\xf9A\xe2J=\x0e/"#'
+csrf = SeaSurf(app)
 
 
 # Database configuration.
@@ -76,6 +78,7 @@ def login():
     return render_template("login.html", state=state)
 
 
+@csrf.exempt
 @app.route("/gconnect", methods=['POST'])
 def gconnect():
     """Handle request to connect with a Google+ account."""
