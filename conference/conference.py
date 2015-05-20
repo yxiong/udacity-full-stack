@@ -40,6 +40,9 @@ from models import ConferenceForms
 from models import ConferenceQueryForm
 from models import ConferenceQueryForms
 from models import TeeShirtSize
+from models import Session
+from models import SessionForm
+from models import SessionForms
 
 from settings import WEB_CLIENT_ID
 from settings import ANDROID_CLIENT_ID
@@ -57,6 +60,13 @@ DEFAULTS = {
     "maxAttendees": 0,
     "seatsAvailable": 0,
     "topics": [ "Default", "Topic" ],
+}
+
+SESSION_DEFAULTS = {
+    "highlights": [ "Default", "Highlight" ],
+    "speaker": "Default speaker",
+    "duration": 0,
+    "typeOfSession": "NOT_SPECIFIED",
 }
 
 OPERATORS = {
@@ -565,5 +575,67 @@ class ConferenceApi(remote.Service):
         """Unregister user for selected conference."""
         return self._conferenceRegistration(request, reg=False)
 
+
+# - - - Session objects - - - - - - - - - - - - - - - - -
+
+    def _createSessionObject(self, request):
+        """Create or update Session object, returning SessionForm/request."""
+        # Authenticate user.
+        #
+        # Note that we do not require the session creater to be the conference
+        # organizer --- any valid user can create a session for any existing
+        # conference.
+        user = endpoints.get_current_user()
+        if not user:
+            raise endpoints.UnauthorizedException('Authorization required')
+
+        # Check that the request has a session name.
+        if not request.name:
+            raise endpoints.BadRequestException("Session 'name' field required")
+
+        # Check that the request has a valid websafeConferenceKey.
+        if not request.websafeConferenceKey:
+            raise endpoints.BadRequestException("Session 'websafeConferenceKey' field required")
+        # TODO: Check the validity of websafeConferenceKey.
+        conferenceKey = ndb.Key(urlsafe=request.websafeConferenceKey)
+        if not conferenceKey:
+            raise endpoints.BadRequestException("Session 'websafeConferenceKey' field invalid")
+
+        # copy SessionForm/ProtoRPC Message into dict
+        data = {field.name: getattr(request, field.name) for field in request.all_fields()}
+        del data['websafeKey']
+        del data['websafeConferenceKey']
+
+        # Check that the request has a valid SessionType.
+        # TODO
+
+        # convert date and start time to DateTime object
+        # TODO
+        del data['date']
+
+        # add default values for missing fields
+        for df in SESSION_DEFAULTS:
+            if data[df] in (None, []):
+                data[df] = SESSION_DEFAULTS[df]
+
+        # generate Session ID based on Conference key and get Session key from ID.
+        sessionId = Session.allocate_ids(size=1, parent=conferenceKey)[0]
+        sessionKey = ndb.Key(Session, sessionId, parent=conferenceKey)
+        data['key'] = sessionKey
+
+        # create Session
+        Session(**data).put()
+
+        # send email to creater confirming creation of Session
+        # TODO
+
+        # TODO: Return updated request.
+        return request
+
+    @endpoints.method(SessionForm, SessionForm, path='session',
+                      http_method='POST', name='createSession')
+    def createSession(self, request):
+        """Create new session."""
+        return self._createSessionObject(request)
 
 api = endpoints.api_server([ConferenceApi]) # register API
