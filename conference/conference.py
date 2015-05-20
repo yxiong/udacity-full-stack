@@ -118,6 +118,13 @@ SESSION_GET_REQUEST = endpoints.ResourceContainer(
     websafeSessionKey=messages.StringField(1),
 )
 
+SESSION_BY_DATE_TIME_REQUEST = endpoints.ResourceContainer(
+    message_types.VoidMessage,
+    date=messages.StringField(1),
+    startTimeBegin=messages.StringField(2),
+    startTimeEnd=messages.StringField(3),
+)
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -745,6 +752,21 @@ class ConferenceApi(remote.Service):
     def createSession(self, request):
         """Create new session."""
         return self._createSessionObject(request)
+
+    @endpoints.method(SESSION_BY_DATE_TIME_REQUEST, SessionForms,
+                      path='sessionByDateTime/{date}/{startTimeBegin}/{startTimeEnd}',
+                      http_method='GET', name='getSessionsByDateTime')
+    def getSessionsByDateTime(self, request):
+        """Given a `date` and `startTime` range, return all sessions within this time
+        frame, across all conferences."""
+        sessions = Session.query(
+            Session.date == datetime.strptime(request.date, "%Y-%m-%d").date()
+        ).filter(
+            Session.startTime >= datetime.strptime(request.startTimeBegin, "%H%M").time()
+        ).filter(
+            Session.startTime <= datetime.strptime(request.startTimeEnd, "%H%M").time()
+        )
+        return SessionForms(items=[self._copySessionToForm(s) for s in sessions])
 
 # - - - Session Wishlist - - - - - - - - - - - - - - - - - - - -
 
