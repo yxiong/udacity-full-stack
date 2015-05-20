@@ -67,7 +67,7 @@ DEFAULTS = {
 SESSION_DEFAULTS = {
     "highlights": [ "Default", "Highlight" ],
     "speaker": "Default speaker",
-    "duration": 0,
+    "duration": "0",
     "typeOfSession": "NOT_SPECIFIED",
 }
 
@@ -622,14 +622,8 @@ class ConferenceApi(remote.Service):
         sf = SessionForm()
         for field in sf.all_fields():
             # Need special treatment for `date` and `startTime` fields.
-            if field.name == "date":
-                # TODO
-                pass
-            elif field.name == "startTime":
-                # TODO
-                pass
-            elif field.name == "duration":
-                sf.duration = str(session.duration)
+            if field.name in ("date", "startTime", "duration"):
+                setattr(sf, field.name, str(getattr(session, field.name)))
             elif field.name == "typeOfSession":
                 sf.typeOfSession = SessionType(session.typeOfSession)
             elif field.name == "websafeKey":
@@ -672,17 +666,20 @@ class ConferenceApi(remote.Service):
         del data['websafeKey']
         del data['websafeConferenceKey']
 
-        # convert the enum type to string
-        data["typeOfSession"] = str(data["typeOfSession"])
-
-        # convert date and start time to DateTime object
-        # TODO
-        del data['date']
+        # convert the date and startTime into Date/Time properties
+        if data['date']:
+            data['date'] = datetime.strptime(data['date'], "%Y-%m-%d").date()
+        if data['startTime']:
+            data['startTime'] = datetime.strptime(data['startTime'], "%H:%M").time()
 
         # add default values for missing fields
         for df in SESSION_DEFAULTS:
             if data[df] in (None, []):
                 data[df] = SESSION_DEFAULTS[df]
+
+        # perform necessary type conversion
+        data["typeOfSession"] = str(data["typeOfSession"])
+        data["duration"] = int(data["duration"])
 
         # generate Session ID based on Conference key and get Session key from ID.
         sessionId = Session.allocate_ids(size=1, parent=conferenceKey)[0]
