@@ -112,6 +112,11 @@ SESSION_BY_SPEAKER_REQUEST = endpoints.ResourceContainer(
     speaker=messages.StringField(1),
 )
 
+SESSION_GET_REQUEST = endpoints.ResourceContainer(
+    message_types.VoidMessage,
+    websafeSessionKey=messages.StringField(1),
+)
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -729,5 +734,49 @@ class ConferenceApi(remote.Service):
     def createSession(self, request):
         """Create new session."""
         return self._createSessionObject(request)
+
+# - - - Session Wishlist - - - - - - - - - - - - - - - - - - - -
+
+    @ndb.transactional(xg=True)
+    @endpoints.method(SESSION_GET_REQUEST, BooleanMessage,
+                      path='sessionWishlist/{websafeSessionKey}',
+                      http_method='POST', name='addSessionToWishlist')
+    def addSessionToWishlist(self, request):
+        """Adds the session to the user's list of sessions they are interested in
+        attending."""
+        # get user Profile
+        profile = self._getProfileFromUser()
+
+        # TODO: Check the validity of websafeConferenceKey.
+        sessionKey = ndb.Key(urlsafe=request.websafeSessionKey)
+        if not sessionKey:
+            raise endpoints.NotFoundException(
+                'No session found with key: %s' % request.websafeSessionKey)
+
+        # check if user already have this session in the wishlist
+        if request.websafeSessionKey in profile.sessionKeysWishlist:
+            raise ConflictException(
+                "You have already added this session to your wish list")
+
+        # add to wish list
+        profile.sessionKeysWishlist.append(request.websafeSessionKey)
+        profile.put()
+        return BooleanMessage(data=True)
+
+    @endpoints.method(message_types.VoidMessage, SessionForms,
+                      path='sessionWishlist',
+                      http_method='GET', name='getSessionsInWishlist')
+    def getSessionsInWishlist(self, request):
+        """Query for all the sessions in a conference that the user is interested in"""
+        # get user Profile
+        profile = self._getProfileFromUser()
+
+        # Get sessions in the wish list.
+        sessionKeys = [ndb.Key(urlsafe=k) for k in profile.sessionKeysWishlist]
+        sessions = ndb.get_multi(sessionKeys)
+
+        # return set of SessionForm objects per Session
+        return SessionForms(items=[self._copySessionToForm(s) for s in sessions])
+
 
 api = endpoints.api_server([ConferenceApi]) # register API
