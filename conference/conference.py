@@ -27,6 +27,7 @@ from google.appengine.api import memcache
 from google.appengine.api import taskqueue
 from google.appengine.api import urlfetch
 from google.appengine.ext import ndb
+from google.net.proto.ProtocolBuffer import ProtocolBufferDecodeError
 
 from models import ConflictException
 from models import Profile
@@ -150,6 +151,22 @@ def _getUserId():
     scopes=[EMAIL_SCOPE])
 class ConferenceApi(remote.Service):
     """Conference API v0.1"""
+
+    def _urlsafeKeyOrNone(self, websafeKey):
+        """A helper function that turns a `websafeKey string` to an `ndb.Key` object.
+        If the input `websafeKey` is not found in the database, return `None`.
+
+        Note that the function only catches invalid `string` input (i.e. input
+        `websafeKey` is a `string` but not corresponding to any safe key in the
+        database). Other error can still cause exception thrown (e.g. if
+        `websafeKey` is not a string, a `TypeError` can still be thrown).
+
+        See http://stackoverflow.com/questions/30337240/.
+        """
+        try:
+            return ndb.Key(urlsafe=websafeKey)
+        except ProtocolBufferDecodeError:
+            return None
 
 # - - - Conference objects - - - - - - - - - - - - - - - - -
 
@@ -646,8 +663,7 @@ class ConferenceApi(remote.Service):
         # Check that the request has a valid websafeConferenceKey.
         if not request.websafeConferenceKey:
             raise endpoints.BadRequestException("Session 'websafeConferenceKey' field required")
-        # TODO: Check the validity of websafeConferenceKey.
-        conferenceKey = ndb.Key(urlsafe=request.websafeConferenceKey)
+        conferenceKey = self._urlsafeKeyOrNone(request.websafeConferenceKey)
         if not conferenceKey:
             raise endpoints.BadRequestException("Session 'websafeConferenceKey' field invalid")
 
@@ -688,8 +704,7 @@ class ConferenceApi(remote.Service):
     def getConferenceSessions(self, request):
         """Given a conference, return all sessions."""
         # get Conference object from request; bail if not found
-        # TODO: Check validity of input to urlsafe.
-        conferenceKey = ndb.Key(urlsafe=request.websafeConferenceKey)
+        conferenceKey = self._urlsafeKeyOrNone(request.websafeConferenceKey)
         if not conferenceKey:
             raise endpoints.NotFoundException(
                 'No conference found with key: %s.' % request.websafeConferenceKey)
@@ -705,8 +720,7 @@ class ConferenceApi(remote.Service):
                       http_method='GET', name='getConferenceSessionsByType')
     def getConferenceSessionsByType(self, request):
         # get Conference object from request; bail if not found
-        # TODO: Check validity of input to urlsafe.
-        conferenceKey = ndb.Key(urlsafe=request.websafeConferenceKey)
+        conferenceKey = self._urlsafeKeyOrNone(request.websafeConferenceKey)
         if not conferenceKey:
             raise endpoints.NotFoundException(
                 'No conference found with key: %s.' % request.websafeConferenceKey)
@@ -747,8 +761,8 @@ class ConferenceApi(remote.Service):
         # get user Profile
         profile = self._getProfileFromUser()
 
-        # TODO: Check the validity of websafeConferenceKey.
-        sessionKey = ndb.Key(urlsafe=request.websafeSessionKey)
+        # check the validity of websafeConferenceKey.
+        sessionKey = self._urlsafeKeyOrNone(request.websafeSessionKey)
         if not sessionKey:
             raise endpoints.NotFoundException(
                 'No session found with key: %s' % request.websafeSessionKey)
