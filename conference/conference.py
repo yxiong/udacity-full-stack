@@ -125,6 +125,13 @@ SESSION_BY_DATE_TIME_REQUEST = endpoints.ResourceContainer(
     startTimeEnd=messages.StringField(3),
 )
 
+SESSION_BY_TYPE_DURATION_REQUEST = endpoints.ResourceContainer(
+    message_types.VoidMessage,
+    typeOfSession=messages.StringField(1),
+    durationMin=messages.StringField(2),
+    durationMax=messages.StringField(3),
+)
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -759,12 +766,32 @@ class ConferenceApi(remote.Service):
     def getSessionsByDateTime(self, request):
         """Given a `date` and `startTime` range, return all sessions within this time
         frame, across all conferences."""
+        # Create a query for the request.
+        #
+        # Note that we use "%H%M" for time format (e.g. "0700", "1830"), instead
+        # of the regular "%H:%M" (e.g. "07:00", "18:30"), because the latter
+        # cuase some url parsing problems in the endpoint api.
         sessions = Session.query(
             Session.date == datetime.strptime(request.date, "%Y-%m-%d").date()
         ).filter(
             Session.startTime >= datetime.strptime(request.startTimeBegin, "%H%M").time()
         ).filter(
             Session.startTime <= datetime.strptime(request.startTimeEnd, "%H%M").time()
+        )
+        return SessionForms(items=[self._copySessionToForm(s) for s in sessions])
+
+    @endpoints.method(SESSION_BY_TYPE_DURATION_REQUEST, SessionForms,
+                      path='sessionByTypeDuration/{typeOfSession}/{durationMin}/{durationMax}',
+                      http_method='GET', name='getSessionsByTypeDuration')
+    def getSessionsByTypeDuration(self, request):
+        """Given a `typeOfSession` and a duration limit, return all sessions of the
+        specified type and within the required duration limit."""
+        sessions = Session.query(
+            Session.typeOfSession == request.typeOfSession
+        ).filter(
+            Session.duration >= int(request.durationMin)
+        ).filter(
+            Session.duration <= int(request.durationMax)
         )
         return SessionForms(items=[self._copySessionToForm(s) for s in sessions])
 
