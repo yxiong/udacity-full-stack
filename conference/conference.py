@@ -95,6 +95,11 @@ CONF_POST_REQUEST = endpoints.ResourceContainer(
     websafeConferenceKey=messages.StringField(1),
 )
 
+SESSION_BY_CONF_REQUEST = endpoints.ResourceContainer(
+    message_types.VoidMessage,
+    websafeConferenceKey=messages.StringField(1),
+)
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -578,6 +583,35 @@ class ConferenceApi(remote.Service):
 
 # - - - Session objects - - - - - - - - - - - - - - - - -
 
+    def _copySessionToForm(self, session):
+        """Copy the relavent fields from Session to SessionForm."""
+        sf = SessionForm()
+        for field in sf.all_fields():
+            # Need special treatment for `date` and `startTime` fields.
+            if field.name == "date":
+                # TODO
+                pass
+            elif field.name == "startTime":
+                # TODO
+                pass
+            elif field.name == "duration":
+                sf.duration = str(session.duration)
+            elif field.name == "typeOfSession":
+                # TODO
+                pass
+            elif field.name == "websafeKey":
+                sf.websafeKey = session.key.urlsafe()
+            elif field.name == "websafeConferenceKey":
+                sf.websafeConferenceKey = session.key.parent().urlsafe()
+            elif hasattr(session, field.name):
+                # name, highlights and speaker.
+                setattr(sf, field.name, getattr(session, field.name))
+            else:
+                raise endpoints.InternalServerErrorException(
+                    "Unexpected field name '%s'." % field.name)
+        sf.check_initialized()
+        return sf
+
     def _createSessionObject(self, request):
         """Create or update Session object, returning SessionForm/request."""
         # Authenticate user.
@@ -631,6 +665,24 @@ class ConferenceApi(remote.Service):
 
         # TODO: Return updated request.
         return request
+
+    @endpoints.method(SESSION_BY_CONF_REQUEST, SessionForms,
+                      path='sessionByConference/{websafeConferenceKey}',
+                      http_method='GET', name='getConferenceSessions')
+    def getConferenceSessions(self, request):
+        """Given a conference, return all sessions."""
+        # get Conference object from request; bail if not found
+        # TODO: Check validity of input to urlsafe.
+        conferenceKey = ndb.Key(urlsafe=request.websafeConferenceKey)
+        if not conferenceKey:
+            raise endpoints.NotFoundException(
+                'No conference found with key: %s ' % request.websafeConferenceKey)
+
+        # create ancestor query for all key matches for this conference
+        sessions = Session.query(ancestor=conferenceKey)
+
+        # return set of SessionForm objects per Session
+        return SessionForms(items=[self._copySessionToForm(s) for s in sessions])
 
     @endpoints.method(SessionForm, SessionForm, path='session',
                       http_method='POST', name='createSession')

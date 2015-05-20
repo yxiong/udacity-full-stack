@@ -124,7 +124,7 @@ class SessionForm(messages.Message):
     highlights    = messages.StringField(2, repeated=True)
     speaker       = messages.StringField(3)
     duration      = messages.StringField(4)
-    typeOfSession = messages.StringField(5)
+    typeOfSession = messages.EnumField('SessionType', 5)
     date          = messages.StringField(6)
     startTime     = messages.StringField(7)
     websafeKey    = messages.StringField(8)
