@@ -21,16 +21,23 @@ installing/configuring web and database servers.
        IdentityFile ~/.ssh/udacity_key.rsa
        ```
 
-   and then we can log in with `ssh root@udacity`.
+   and then log in with `ssh root@udacity`.
 
 3. Create a new user named grader
 
+   `adduser grader` with a given password.
 
 4. Give the grader the permission to sudo
 
+   Run `visudo` and add the following line
+
+       ```
+       grader ALL=(ALL) ALL
+       ```
 
 5. Update all currently installed packages
 
+   `apt-get -qqy update`
 
 6. Change the SSH port from 22 to 2200
 
