@@ -8,7 +8,7 @@ installing/configuring web and database servers.
 
 1. Launch your Virtual Machine with your Udacity account
 
-   The public IP address of the Virtual machine is `55.25.57.93`.
+   The public IP address of the Virtual machine is `52.11.182.246`.
 
 
 2. Follow the instructions provided to SSH into your server
@@ -17,7 +17,7 @@ installing/configuring web and database servers.
 
        ```
        Host udacity
-       HostName 55.25.57.93
+       HostName 52.11.182.246
        IdentityFile ~/.ssh/udacity_key.rsa
        ```
 
@@ -41,10 +41,27 @@ installing/configuring web and database servers.
 
 6. Change the SSH port from 22 to 2200
 
+   `vi /etc/ssh/sshd_config` and change the line `Port 22` to `Port 2200`, and
+   then `service ssh restart`.
+
+   Also add `Port 2200` to `~/.ssh/config` file.
+
 
 7. Configure the Universal Firewall to only allow incoming connections for SSH
    (port 2200), HTTP (port 80), and NTP (port 123)
 
+       ```
+       iptables -A INPUT -i eth0 -p tcp --dport 2200 -m state --state NEW,ESTABLISHED -j ACCEPT
+       iptables -A OUTPUT -o eth0 -p tcp --sport 2200 -m state --state ESTABLISHED -j ACCEPT
+       iptables -A INPUT -i eth0 -p tcp --dport 80 -m state --state NEW,ESTABLISHED -j ACCEPT
+       iptables -A OUTPUT -o eth0 -p tcp --sport 80 -m state --state ESTABLISHED -j ACCEPT
+       iptables -A INPUT -i eth0 -p tcp --dport 123 -m state --state NEW,ESTABLISHED -j ACCEPT
+       iptables -A OUTPUT -o eth0 -p tcp --sport 123 -m state --state ESTABLISHED -j ACCEPT
+       iptables -P INPUT DROP
+       iptables -P OUTPUT DROP
+       iptables -P FORWARD DROP
+       iptables-save
+       ```
 
 8. Configure the local timezone to UTC
 
