@@ -54,6 +54,7 @@ from settings import ANDROID_AUDIENCE
 EMAIL_SCOPE = endpoints.EMAIL_SCOPE
 API_EXPLORER_CLIENT_ID = endpoints.API_EXPLORER_CLIENT_ID
 MEMCACHE_ANNOUNCEMENTS_KEY = "RECENT_ANNOUNCEMENTS"
+MEMCACHE_FEATURED_SPEAKER_KEY_PREFIX = "FEATURED_SPEAKER-"
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -94,11 +95,6 @@ CONF_GET_REQUEST = endpoints.ResourceContainer(
 
 CONF_POST_REQUEST = endpoints.ResourceContainer(
     ConferenceForm,
-    websafeConferenceKey=messages.StringField(1),
-)
-
-SESSION_BY_CONF_REQUEST = endpoints.ResourceContainer(
-    message_types.VoidMessage,
     websafeConferenceKey=messages.StringField(1),
 )
 
@@ -686,6 +682,21 @@ class ConferenceApi(remote.Service):
         if data['startTime']:
             data['startTime'] = datetime.strptime(data['startTime'], "%H:%M").time()
 
+        # Check if the speaker should be featured.
+        if data['speaker']:
+            sessionsBySameSpeaker = [s for s in Session.query(
+                ancestor=conferenceKey).filter(Session.speaker == data['speaker'])]
+            if len(sessionsBySameSpeaker) > 0:
+                # Feature this speaker. Note that we only have one featured
+                # speaker for each conference at one time, and therefore this
+                # speaker might 'evict' the current featured speaker.
+                sessionNames = [s.name for s in sessionsBySameSpeaker]
+                sessionNames.append(data['name'])
+                memcache.set(
+                    MEMCACHE_FEATURED_SPEAKER_KEY_PREFIX+request.websafeConferenceKey,
+                    data['speaker'] + ": " + ", ".join(sessionNames)
+                )
+
         # add default values for missing fields
         for df in SESSION_DEFAULTS:
             if data[df] in (None, []):
@@ -709,7 +720,7 @@ class ConferenceApi(remote.Service):
 
         return self._copySessionToForm(session)
 
-    @endpoints.method(SESSION_BY_CONF_REQUEST, SessionForms,
+    @endpoints.method(CONF_GET_REQUEST, SessionForms,
                       path='sessionByConference/{websafeConferenceKey}',
                       http_method='GET', name='getConferenceSessions')
     def getConferenceSessions(self, request):
@@ -807,7 +818,7 @@ class ConferenceApi(remote.Service):
         # get user Profile
         profile = self._getProfileFromUser()
 
-        # check the validity of websafeConferenceKey.
+        # check the validity of websafeSessionKey.
         sessionKey = self._urlsafeKeyOrNone(request.websafeSessionKey)
         if not sessionKey:
             raise endpoints.NotFoundException(
@@ -838,5 +849,21 @@ class ConferenceApi(remote.Service):
         # return set of SessionForm objects per Session
         return SessionForms(items=[self._copySessionToForm(s) for s in sessions])
 
+# - - - Featured speaker - - - - - - - - - - - - - - - - - - - -
+    @endpoints.method(CONF_GET_REQUEST, StringMessage,
+                      path='featuredSpeaker/{websafeConferenceKey}',
+                      http_method='GET', name='getFeaturedSpeaker')
+    def getFeaturedSpeaker(self, request):
+        """Get the featured speaker for given conference."""
+        # check the validity of websafeConferenceKey.
+        conferenceKey = self._urlsafeKeyOrNone(request.websafeConferenceKey)
+        if not conferenceKey:
+            raise endpoints.NotFoundException(
+                'No conference found with key: %s' % request.websafeSessionKey)
+        response = memcache.get(
+            MEMCACHE_FEATURED_SPEAKER_KEY_PREFIX+request.websafeConferenceKey)
+        if response is None:
+            response = ""
+        return StringMessage(data = response)
 
 api = endpoints.api_server([ConferenceApi]) # register API
