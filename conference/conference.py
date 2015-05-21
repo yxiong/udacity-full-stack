@@ -741,6 +741,8 @@ class ConferenceApi(remote.Service):
                       path='sessionByType/{websafeConferenceKey}/{typeOfSession}',
                       http_method='GET', name='getConferenceSessionsByType')
     def getConferenceSessionsByType(self, request):
+        """Given a conference, return all sessions of a specified type
+        (e.g. lecture, keynote, workshop)"""
         # get Conference object from request; bail if not found
         conferenceKey = self._urlsafeKeyOrNone(request.websafeConferenceKey)
         if not conferenceKey:
@@ -859,7 +861,7 @@ class ConferenceApi(remote.Service):
         conferenceKey = self._urlsafeKeyOrNone(request.websafeConferenceKey)
         if not conferenceKey:
             raise endpoints.NotFoundException(
-                'No conference found with key: %s' % request.websafeSessionKey)
+                'No conference found with key: %s' % request.websafeConferenceKey)
         response = memcache.get(
             MEMCACHE_FEATURED_SPEAKER_KEY_PREFIX+request.websafeConferenceKey)
         if response is None:

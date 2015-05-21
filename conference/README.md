@@ -30,3 +30,58 @@ App Engine application for the Udacity training course.
 [4]: https://console.developers.google.com/
 [5]: https://localhost:8080/
 [6]: https://developers.google.com/appengine/docs/python/endpoints/endpoints_tool
+
+
+## Task 1: Add Sessions to Conference
+
+We created a `Session` model that contains 7 fields: `name`, `highlights`,
+`speaker`, `duration`, `typeOfSession`, `date` and `startTime`. A `Session` key
+will have a `Conference` key as its parent.
+
+We also create a corresponding `SessionForm` for RPC protocol buffer
+communication. This form contains additional `websafeKey` to identify this
+session, and `websafeConferenceKey` to identify the conference this session
+belongs to.
+
+With these data structures, we implemented two endpoints methods:
+`getConferenceSessions`, `getConferenceSessionsByType`, `getSessionsBySpeaker`
+and `createSession`.
+
+
+## Task 2: Add Sessions to User Wishlist
+
+We added a repeated field `sessionKeyWishlist` to `Profile` model to keep track
+of user's wishlist. Correspondingly, we implemented two endpoints methods
+`addSessionToWishlist` and `getSessionsInWishlist`.
+
+
+## Task 3: Work on indexes and queries
+
+We added two additional query types:
+
+  * `getSessionsByDateTime`: Given a `date` and `startTime` range, return all
+    sessions within this time frame, across all conferences.
+  * `getSessionsByTypeDuration`: Given a `typeOfSession` and a duration limit,
+    return all sessions of the specified type and within the required duration
+    limit.
+
+We launch the app in local machine to automatically generate the required
+indexes, and deploy those indexes to the server.
+
+For the "don't like workshops and don't like sessions after 7pm" query, it can
+not simply be done with ndb query, because it will require two inequality
+condition applied to two different fields (`typeOfSession` and `startTime`),
+which is not allowed in DataStore.
+
+One way around this problem implement one query with ndb and perform the other
+in memory. For example, one can get all the sessions before 7pm with an ndb
+query, and then filter out workshops by looking at each session in memory.
+
+
+## Task 4: Add a Task
+
+We used `memcache` to implement featured speaker. When a new session is added to
+conference, we check whether there is more than one session by the same speaker
+at this conference, and if so, ad a `memcache` entry that features the speaker
+and session names. Note that each conference can only have one featured speaker
+at one time, and new speaker might 'evict' old ones.
