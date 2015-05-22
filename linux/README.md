@@ -23,9 +23,11 @@ installing/configuring web and database servers.
 
    and then log in with `ssh root@udacity`.
 
+
 3. Create a new user named grader
 
    `adduser grader` with a given password.
+
 
 4. Give the grader the permission to sudo
 
@@ -55,9 +57,11 @@ installing/configuring web and database servers.
      line `PermitRootLogin without-password` to `PermitRootLogin no`, and then
      run `sudo service ssh restart`.
 
+
 5. Update all currently installed packages
 
    `sudo apt-get -qqy update`
+
 
 6. Change the SSH port from 22 to 2200
 
@@ -85,11 +89,25 @@ installing/configuring web and database servers.
        iptables-save
        ```
 
+
 8. Configure the local timezone to UTC
+
+   Run `sudo dpkg-reconfigure tzdata`, select `None of the above` in the first
+   list and `UTC` in the second list.
 
 
 9. Install and configure Apache to serve a Python mod_wsgi application
 
+       ```
+       sudo su
+       iptables -P INPUT ACCEPT
+       iptables -P OUTPUT ACCEPT
+       apt-get install -qqy apache2 apache2-bin apache2-data apache2-mpm-prefork apache2-utils libexpat1 ssl-cert
+       apt-get install -qqy libapache2-mod-wsgi
+       iptables -P INPUT DROP
+       iptables -P OUTPUT DROP
+       service apache2 restart
+       ```
 
 10. Install and configure PostgreSQL:
     * Do not allow remote connections
