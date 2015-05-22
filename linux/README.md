@@ -35,22 +35,45 @@ installing/configuring web and database servers.
        grader ALL=(ALL) ALL
        ```
 
+   In addition, we did the followings
+
+   * Allow user to login through ssh as `grader` with the same private key that
+     can be used to login as `root`:
+
+         ```
+         su grader
+         mkdir ~/.ssh
+         chmod 700 ~/.ssh
+         sudo cp /root/.ssh/authorized_keys ~/.ssh/
+         sudo chown grader:grader ~/.ssh/authorized_keys
+         ```
+
+    From now on, user can login through ssh by `ssh grader@udacity`, assuming
+    the `~/.ssh/config` file has been properly set. After logging in, the user
+    can switch to `root` by `sudo su`.
+
+  * Disable ssh directly to `root`: edit `/etc/ssh/sshd_config` to change the
+    line `PermitRootLogin without-password` to `PermitRootLogin no`, and then
+    run `sudo service ssh restart`.
+
 5. Update all currently installed packages
 
-   `apt-get -qqy update`
+   `sudo apt-get -qqy update`
 
 6. Change the SSH port from 22 to 2200
 
-   `vi /etc/ssh/sshd_config` and change the line `Port 22` to `Port 2200`, and
-   then `service ssh restart`.
+   Edit `/etc/ssh/sshd_config` to change the line `Port 22` to `Port 2200`, and
+   then run `sudo service ssh restart`.
 
-   Also add `Port 2200` to `~/.ssh/config` file.
+   Also add `Port 2200` to `~/.ssh/config` file in local machine (not on the
+   server).
 
 
 7. Configure the Universal Firewall to only allow incoming connections for SSH
    (port 2200), HTTP (port 80), and NTP (port 123)
 
        ```
+       sudo su
        iptables -A INPUT -i eth0 -p tcp --dport 2200 -m state --state NEW,ESTABLISHED -j ACCEPT
        iptables -A OUTPUT -o eth0 -p tcp --sport 2200 -m state --state ESTABLISHED -j ACCEPT
        iptables -A INPUT -i eth0 -p tcp --dport 80 -m state --state NEW,ESTABLISHED -j ACCEPT
