@@ -14,6 +14,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.types import Integer, String, UnicodeText
 
+DATABASE_NAME = "sqlite:///catalog.db"
+
 Base = declarative_base()
 
 def abbrev_text(text, n):
@@ -109,12 +111,12 @@ def read_raw_item_file(filename, categories_by_name):
 
 
 if __name__ == "__main__":
-    # Remove the database file if already exists.
-    if os.path.exists("catalog.db"):
+    # Remove the database file if already exists. This only works for sqlite.
+    if DATABASE_NAME == "sqlite:///catalog.db" and os.path.exists("catalog.db"):
         os.remove("catalog.db")
 
     # Create the database.
-    engine = create_engine("sqlite:///catalog.db")
+    engine = create_engine(DATABASE_NAME)
     Base.metadata.create_all(engine)
 
     # Make a session from the database engine.

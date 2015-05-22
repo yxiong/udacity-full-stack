@@ -3,7 +3,7 @@
 # Author: Ying Xiong.
 # Created: May 11, 2015.
 
-from database_setup import Base, Category, Item
+from database_setup import Base, Category, Item, DATABASE_NAME
 from flask import Flask
 from flask import render_template, url_for, request, redirect, flash, jsonify
 from flask import session as login_session
@@ -27,16 +27,16 @@ csrf = SeaSurf(app)
 
 
 # Database configuration.
-engine = create_engine("sqlite:///catalog.db",
-                       connect_args = {"check_same_thread":False}) # TODO
+engine = create_engine(DATABASE_NAME)
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind = engine)
 db_session = DBSession()
 
 
 # Google+ authentication configuration.
-client_secrets = json.loads(
-    open("client_secrets.json", 'r').read())['web']['client_id']
+_this_file_path = os.path.dirname(os.path.realpath(__file__))
+client_secrets = json.loads(open(
+    _this_file_path + "/client_secrets.json", 'r').read())['web']['client_id']
 
 
 # We use two in-memory dictionaries to cache the catalog data used by this app,
@@ -51,8 +51,18 @@ client_secrets = json.loads(
 # still category name, and for inner dictionary, the key is item name (which
 # should be unique within a category) and value is an `Item` object. In other
 # word, to access an item, use `items[category_name][item_name]`.
+
 categories = {}
 items = {}
+
+# Read the categories and items from database into memory.
+for c in db_session.query(Category).all():
+    categories[c.name] = c
+for item in db_session.query(Item).all():
+    cname = [c for c in categories.values()
+             if c.cid == item.category_id][0].name
+    item.category_name = cname
+    items.setdefault(cname, {})[item.name] = item
 
 
 @app.route("/")
@@ -447,14 +457,5 @@ def api_json_item(category_name, item_name):
 
 
 if __name__ == "__main__":
-    # Read the categories and items from database into memory.
-    for c in db_session.query(Category).all():
-        categories[c.name] = c
-    for item in db_session.query(Item).all():
-        cname = [c for c in categories.values()
-                 if c.cid == item.category_id][0].name
-        item.category_name = cname
-        items.setdefault(cname, {})[item.name] = item
-
-    app.debug = True  # TODO
+    app.debug = True
     app.run(host = "0.0.0.0", port = 8000)
