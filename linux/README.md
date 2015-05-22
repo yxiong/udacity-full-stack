@@ -114,6 +114,24 @@ installing/configuring web and database servers.
     * Create a new user named catalog that has limited permissions to your
       catalog application database
 
+        ```
+        # Install PostgreSQL.
+        sudo su
+        iptables -P INPUT ACCEPT
+        iptables -P OUTPUT ACCEPT
+        apt-get install -qqy postgresql postgresql-contrib python-psycopg2 libpq-dev
+        iptables -P INPUT DROP
+        iptables -P OUTPUT DROP
+        # Disable remote connections.
+        vi /etc/postgresql/9.3/main/postgresql.conf
+            # set "listen_addresses = 'localhost'"
+        /etc/init.d/postgresql restart
+        # Add a new user named catalog
+        adduser catalog
+        sudo -u postgres createuser catalog
+        sudo -u postgres createdb catalog
+        ```
+
 
 11. Install git, clone and setup your Catalog App project (from your GitHub
     repository from earlier in the Nanodegree program) so that it functions
@@ -121,6 +139,52 @@ installing/configuring web and database servers.
     set this up appropriately so that your .git directory is not publicly
     accessible via a browser!
 
+        ```
+        # Install git and some other dependencies.
+        sudo su
+        iptables -P INPUT ACCEPT
+        iptables -P OUTPUT ACCEPT
+        apt-get install -qqy git
+        wget https://bootstrap.pypa.io/get-pip.py
+        python get-pip.py
+        rm get-pip.py
+        pip install SQLAlchemy Flask flask-seasurf httplib2 oauth2client
+        iptables -P INPUT DROP
+        iptables -P OUTPUT DROP
+
+        # Clone the Catalog App project and setup database.
+        su catalog
+        cd ~
+        git clone https://github.com/yxiong/udacity-full-stack
+        vi udacity-full-stack/catalog/database_setup.py
+            # Modify DATABASE_NAME to "postgresql:///catalog"
+        cd udacity-full-stack/catalog
+        python database_setup.py
+        exit
+
+        # Setup the apache wsgi module.
+        cp -r /home/catalog/udacity-full-stack/catalog /var/www/
+        vi /var/www/catalog/catalog.wsgi
+            # Add following lines.
+            import sys
+            sys.path.insert(0, '/var/www/catalog/')
+            from application import app as application
+        vi /etc/apache2/apache2.conf
+            # Comment out the line "IncludeOptional sites-enabled/*.conf"
+            # Add following lines.
+            <VirtualHost *>
+                WSGIDaemonProcess catalog user=catalog group=catalog threads=5
+                WSGIScriptAlias / /var/www/catalog/catalog.wsgi
+                ErrorLog /var/www/catalog/error.log
+                <Directory /var/www/catalog>
+                    WSGIProcessGroup catalog
+                    WSGIApplicationGroup %{GLOBAL}
+                    Order deny,allow
+                    Allow from all
+                </Directory>
+            </VirtualHost>
+        service apache2 restart
+        ```
 
 
 Author: Ying Xiong.  
