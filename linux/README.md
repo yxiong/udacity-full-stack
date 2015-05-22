@@ -6,9 +6,12 @@ virtual machine and prepare it to host our web applications, to include
 installing updates, securing it from a number of attack vectors and
 installing/configuring web and database servers.
 
+Steps
+-----
+
 1. Launch your Virtual Machine with your Udacity account
 
-   The public IP address of the Virtual machine is `52.11.182.246`.
+   The public IP address of the Virtual machine is `52.10.51.205`.
 
 
 2. Follow the instructions provided to SSH into your server
@@ -17,7 +20,7 @@ installing/configuring web and database servers.
 
        ```
        Host udacity
-       HostName 52.11.182.246
+       HostName 52.10.51.205
        IdentityFile ~/.ssh/udacity_key.rsa
        ```
 
@@ -149,8 +152,6 @@ installing/configuring web and database servers.
         python get-pip.py
         rm get-pip.py
         pip install SQLAlchemy Flask flask-seasurf httplib2 oauth2client
-        iptables -P INPUT DROP
-        iptables -P OUTPUT DROP
 
         # Clone the Catalog App project and setup database.
         su catalog
@@ -161,6 +162,8 @@ installing/configuring web and database servers.
         cd udacity-full-stack/catalog
         python database_setup.py
         exit
+        iptables -P INPUT DROP
+        iptables -P OUTPUT DROP
 
         # Setup the apache wsgi module.
         cp -r /home/catalog/udacity-full-stack/catalog /var/www/
@@ -185,6 +188,44 @@ installing/configuring web and database servers.
             </VirtualHost>
         service apache2 restart
         ```
+
+
+How To Use
+----------
+
+After the steps below, the server should be setup to serve the Catalog
+App. Simply go to http://52.10.51.205/ in browser to checkout.
+
+
+Currently the Google+ login is not functioning. For my understanding, the reason
+is that the server needs to contact with Google via a port that is different
+from 2200, 80 or 123, which is stopped by the firewall we setup. Once we lift the firewall
+
+    iptables -P INPUT ACCEPT
+    iptables -P OUTPUT ACCEPT
+
+the Google+ login will work as expected.
+
+
+To login to the server
+
+    ssh -i ~/.ssh/udacity_key.rsa -p 2200 grader@52.10.51.205
+
+The `grader` user has sudo privilege (e.g. `sudo su`). The `udacity_keys.rsa`
+and `grader`'s password can be found in submission notes.
+
+
+To reset the database and app
+
+    sudo su
+    service apache2 stop
+    sudo -u postgres dropdb catalog
+    sudo -u postgres createdb catalog
+    su catalog
+    cd ~/udacity-full-stack/catalog
+    python database_setup.py
+    exit
+    service apache2 start
 
 
 Author: Ying Xiong.  
