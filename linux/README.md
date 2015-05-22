@@ -47,14 +47,13 @@ installing/configuring web and database servers.
          sudo cp /root/.ssh/authorized_keys ~/.ssh/
          sudo chown grader:grader ~/.ssh/authorized_keys
          ```
+     From now on, user can login through ssh by `ssh grader@udacity`, assuming
+     the `~/.ssh/config` file has been properly set. After logging in, the user
+     can switch to `root` by `sudo su`.
 
-    From now on, user can login through ssh by `ssh grader@udacity`, assuming
-    the `~/.ssh/config` file has been properly set. After logging in, the user
-    can switch to `root` by `sudo su`.
-
-  * Disable ssh directly to `root`: edit `/etc/ssh/sshd_config` to change the
-    line `PermitRootLogin without-password` to `PermitRootLogin no`, and then
-    run `sudo service ssh restart`.
+   * Disable ssh directly to `root`: edit `/etc/ssh/sshd_config` to change the
+     line `PermitRootLogin without-password` to `PermitRootLogin no`, and then
+     run `sudo service ssh restart`.
 
 5. Update all currently installed packages
 
