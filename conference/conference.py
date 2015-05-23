@@ -51,6 +51,8 @@ from settings import ANDROID_CLIENT_ID
 from settings import IOS_CLIENT_ID
 from settings import ANDROID_AUDIENCE
 
+import webapp2
+
 EMAIL_SCOPE = endpoints.EMAIL_SCOPE
 API_EXPLORER_CLIENT_ID = endpoints.API_EXPLORER_CLIENT_ID
 MEMCACHE_ANNOUNCEMENTS_KEY = "RECENT_ANNOUNCEMENTS"
@@ -156,37 +158,38 @@ def _getUserId():
     return user.get('user_id', '')
 
 
+def _entityByKindAndUrlsafeKeyOrNone(kind, websafeKey):
+    """A helper function that turns a `kind` and a `websafeKey string` to an
+    DataStore entity object.
+
+    This function checks (and only checks) the following error cases:
+    - if `websafeKey` is an invalid string, i.e. one that is not produced by `Key.urlsafe()`
+    - if `websafeKey` is valid, but the key is not associated with `kind`
+    - if `websafeKey` is associated with `kind` but does not exist in the database
+
+    If any of the error above happens, the function swallows any exception and
+    returns `None`, but other errors different than above can still cause an
+    exception thrown (e.g. if `websafeKey` is not a string, a `TypeError` can
+    still be thrown).
+
+    See http://stackoverflow.com/questions/30337240/ for reference.
+    """
+    try:
+        key = ndb.Key(urlsafe=websafeKey)
+        entity = key.get()
+        if entity and key.kind() == kind._get_kind():
+            return entity
+        else:
+            return None
+    except ProtocolBufferDecodeError:
+        return None
+
+
 @endpoints.api(name='conference', version='v1', audiences=[ANDROID_AUDIENCE],
     allowed_client_ids=[WEB_CLIENT_ID, API_EXPLORER_CLIENT_ID, ANDROID_CLIENT_ID, IOS_CLIENT_ID],
     scopes=[EMAIL_SCOPE])
 class ConferenceApi(remote.Service):
     """Conference API v0.1"""
-
-    def _entityByKindAndUrlsafeKeyOrNone(self, kind, websafeKey):
-        """A helper function that turns a `kind` and a `websafeKey string` to an
-        DataStore entity object.
-
-        This function checks (and only checks) the following error cases:
-          - if `websafeKey` is an invalid string, i.e. one that is not produced by `Key.urlsafe()`
-          - if `websafeKey` is valid, but the key is not associated with `kind`
-          - if `websafeKey` is associated with `kind` but does not exist in the database
-
-        If any of the error above happens, the function swallows any exception
-        and returns `None`, but other errors different than above can still
-        cause an exception thrown (e.g. if `websafeKey` is not a string, a
-        `TypeError` can still be thrown).
-
-        See http://stackoverflow.com/questions/30337240/ for reference.
-        """
-        try:
-            key = ndb.Key(urlsafe=websafeKey)
-            entity = key.get()
-            if entity and key.kind() == kind._get_kind():
-                return entity
-            else:
-                return None
-        except ProtocolBufferDecodeError:
-            return None
 
 # - - - Conference objects - - - - - - - - - - - - - - - - -
 
@@ -677,8 +680,7 @@ class ConferenceApi(remote.Service):
         # Check that the request has a valid websafeConferenceKey.
         if not request.websafeConferenceKey:
             raise endpoints.BadRequestException("Session 'websafeConferenceKey' field required")
-        conference = self._entityByKindAndUrlsafeKeyOrNone(
-            Conference, request.websafeConferenceKey)
+        conference = _entityByKindAndUrlsafeKeyOrNone(Conference, request.websafeConferenceKey)
         if not conference:
             raise endpoints.BadRequestException("Session 'websafeConferenceKey' field invalid")
 
@@ -692,21 +694,6 @@ class ConferenceApi(remote.Service):
             data['date'] = datetime.strptime(data['date'], "%Y-%m-%d").date()
         if data['startTime']:
             data['startTime'] = datetime.strptime(data['startTime'], "%H:%M").time()
-
-        # Check if the speaker should be featured.
-        if data['speaker']:
-            sessionsBySameSpeaker = [s for s in Session.query(
-                ancestor=conference.key).filter(Session.speaker == data['speaker'])]
-            if len(sessionsBySameSpeaker) > 0:
-                # Feature this speaker. Note that we only have one featured
-                # speaker for each conference at one time, and therefore this
-                # speaker might 'evict' the current featured speaker.
-                sessionNames = [s.name for s in sessionsBySameSpeaker]
-                sessionNames.append(data['name'])
-                memcache.set(
-                    MEMCACHE_FEATURED_SPEAKER_KEY_PREFIX+request.websafeConferenceKey,
-                    data['speaker'] + ": " + ", ".join(sessionNames)
-                )
 
         # add default values for missing fields
         for df in SESSION_DEFAULTS:
@@ -726,6 +713,16 @@ class ConferenceApi(remote.Service):
         session = Session(**data)
         session.put()
 
+        # Check if the speaker should be featured.
+        if data['speaker'] != SESSION_DEFAULTS['speaker']:
+            taskqueue.add(
+                params={
+                    'speaker': data['speaker'],
+                    'websafeConferenceKey': request.websafeConferenceKey,
+                },
+                url='/tasks/check_featured_speaker'
+            )
+
         # send email to creater confirming creation of Session
         # TODO
 
@@ -737,8 +734,7 @@ class ConferenceApi(remote.Service):
     def getConferenceSessions(self, request):
         """Given a conference, return all sessions."""
         # get Conference object from request; bail if not found
-        conference = self._entityByKindAndUrlsafeKeyOrNone(
-            Conference, request.websafeConferenceKey)
+        conference = _entityByKindAndUrlsafeKeyOrNone(Conference, request.websafeConferenceKey)
         if not conference:
             raise endpoints.NotFoundException(
                 'No conference found with key: %s.' % request.websafeConferenceKey)
@@ -756,8 +752,7 @@ class ConferenceApi(remote.Service):
         """Given a conference, return all sessions of a specified type
         (e.g. lecture, keynote, workshop)"""
         # get Conference object from request; bail if not found
-        conference = self._entityByKindAndUrlsafeKeyOrNone(
-            Conference, request.websafeConferenceKey)
+        conference = _entityByKindAndUrlsafeKeyOrNone(Conference, request.websafeConferenceKey)
         if not conference:
             raise endpoints.NotFoundException(
                 'No conference found with key: %s.' % request.websafeConferenceKey)
@@ -834,7 +829,7 @@ class ConferenceApi(remote.Service):
         profile = self._getProfileFromUser()
 
         # check the validity of websafeSessionKey.
-        session = self._entityByKindAndUrlsafeKeyOrNone(Session, request.websafeSessionKey)
+        session = _entityByKindAndUrlsafeKeyOrNone(Session, request.websafeSessionKey)
         if not session:
             raise endpoints.NotFoundException(
                 'No session found with key: %s' % request.websafeSessionKey)
@@ -871,8 +866,7 @@ class ConferenceApi(remote.Service):
     def getFeaturedSpeaker(self, request):
         """Get the featured speaker for given conference."""
         # check the validity of websafeConferenceKey.
-        conference = self._entityByKindAndUrlsafeKeyOrNone(
-            Conference, request.websafeConferenceKey)
+        conference = _entityByKindAndUrlsafeKeyOrNone(Conference, request.websafeConferenceKey)
         if not conference:
             raise endpoints.NotFoundException(
                 'No conference found with key: %s' % request.websafeConferenceKey)
@@ -881,5 +875,29 @@ class ConferenceApi(remote.Service):
         if response is None:
             response = ""
         return StringMessage(data = response)
+
+
+class CheckFeaturedSpeakerHandler(webapp2.RequestHandler):
+    def post(self):
+        """Check and update featured speaker for a given conference."""
+        # Get request parameters.
+        speaker = self.request.get('speaker')
+        websafeConferenceKey = self.request.get('websafeConferenceKey')
+        # Check that the request has a valid websafeConferenceKey.
+        conference = _entityByKindAndUrlsafeKeyOrNone(Conference, websafeConferenceKey)
+        if not conference:
+            raise endpoints.BadRequestException("Session 'websafeConferenceKey' field invalid")
+        # Get other sessions by the same speaker.
+        sessionsBySameSpeaker = [s for s in Session.query(
+            ancestor=conference.key).filter(Session.speaker == speaker)]
+        if len(sessionsBySameSpeaker) > 1:
+            # Feature this speaker. Note that we only have one featured
+            # speaker for each conference at one time, and therefore this
+            # speaker might 'evict' the current featured speaker.
+            sessionNames = [s.name for s in sessionsBySameSpeaker]
+            memcache.set(
+                MEMCACHE_FEATURED_SPEAKER_KEY_PREFIX+websafeConferenceKey,
+                speaker + ": " + ", ".join(sessionNames)
+            )
 
 api = endpoints.api_server([ConferenceApi]) # register API
