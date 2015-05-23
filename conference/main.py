@@ -16,7 +16,6 @@ import webapp2
 from google.appengine.api import app_identity
 from google.appengine.api import mail
 from conference import ConferenceApi
-from conference import CheckFeaturedSpeakerHandler
 
 class SetAnnouncementHandler(webapp2.RequestHandler):
     def get(self):
@@ -37,6 +36,15 @@ class SendConfirmationEmailHandler(webapp2.RequestHandler):
             'conference:\r\n\r\n%s' % self.request.get(
                 'conferenceInfo')
         )
+
+
+class CheckFeaturedSpeakerHandler(webapp2.RequestHandler):
+    def post(self):
+        """Check and update featured speaker for a given conference."""
+        # Get request parameters.
+        speaker = self.request.get('speaker')
+        websafeConferenceKey = self.request.get('websafeConferenceKey')
+        ConferenceApi._checkFeaturedSpeaker(speaker, websafeConferenceKey)
 
 
 app = webapp2.WSGIApplication([

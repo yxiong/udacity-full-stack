@@ -51,8 +51,6 @@ from settings import ANDROID_CLIENT_ID
 from settings import IOS_CLIENT_ID
 from settings import ANDROID_AUDIENCE
 
-import webapp2
-
 EMAIL_SCOPE = endpoints.EMAIL_SCOPE
 API_EXPLORER_CLIENT_ID = endpoints.API_EXPLORER_CLIENT_ID
 MEMCACHE_ANNOUNCEMENTS_KEY = "RECENT_ANNOUNCEMENTS"
@@ -877,13 +875,9 @@ class ConferenceApi(remote.Service):
             response = ""
         return StringMessage(data = response)
 
-
-class CheckFeaturedSpeakerHandler(webapp2.RequestHandler):
-    def post(self):
-        """Check and update featured speaker for a given conference."""
-        # Get request parameters.
-        speaker = self.request.get('speaker')
-        websafeConferenceKey = self.request.get('websafeConferenceKey')
+    @staticmethod
+    def _checkFeaturedSpeaker(speaker, websafeConferenceKey):
+        """Helper function to check and update featured speaker for a given conference."""
         # Check that the request has a valid websafeConferenceKey.
         conference = _entityByKindAndUrlsafeKeyOrNone(Conference, websafeConferenceKey)
         if not conference:

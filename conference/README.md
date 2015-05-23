@@ -43,7 +43,7 @@ communication. This form contains additional `websafeKey` to identify this
 session, and `websafeConferenceKey` to identify the conference this session
 belongs to.
 
-With these data structures, we implemented two endpoints methods:
+With these data structures, we implemented four endpoints methods:
 `getConferenceSessions`, `getConferenceSessionsByType`, `getSessionsBySpeaker`
 and `createSession`.
 
