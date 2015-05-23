@@ -714,7 +714,7 @@ class ConferenceApi(remote.Service):
         session = Session(**data)
         session.put()
 
-        # Check if the speaker should be featured.
+        # Check if the speaker should be featured. The current session has been put into Data Store by now.
         if data['speaker'] != SESSION_DEFAULTS['speaker']:
             taskqueue.add(
                 params={
@@ -888,7 +888,7 @@ class CheckFeaturedSpeakerHandler(webapp2.RequestHandler):
         conference = _entityByKindAndUrlsafeKeyOrNone(Conference, websafeConferenceKey)
         if not conference:
             raise endpoints.BadRequestException("Session 'websafeConferenceKey' field invalid")
-        # Get other sessions by the same speaker.
+        # Get all sessions by this speaker and see if there is more than one.
         sessionsBySameSpeaker = [s for s in Session.query(
             ancestor=conference.key).filter(Session.speaker == speaker)]
         if len(sessionsBySameSpeaker) > 1:
