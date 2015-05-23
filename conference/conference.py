@@ -663,15 +663,12 @@ class ConferenceApi(remote.Service):
         return sf
 
     def _createSessionObject(self, request):
-        """Create or update Session object, returning SessionForm/request."""
+        """Create Session object, returning SessionForm/request."""
         # Authenticate user.
-        #
-        # Note that we do not require the session creater to be the conference
-        # organizer --- any valid user can create a session for any existing
-        # conference.
         user = endpoints.get_current_user()
         if not user:
             raise endpoints.UnauthorizedException('Authorization required')
+        user_id = _getUserId()
 
         # Check that the request has a session name.
         if not request.name:
@@ -683,6 +680,10 @@ class ConferenceApi(remote.Service):
         conference = _entityByKindAndUrlsafeKeyOrNone(Conference, request.websafeConferenceKey)
         if not conference:
             raise endpoints.BadRequestException("Session 'websafeConferenceKey' field invalid")
+
+        # Make sure the user is the conference organizer.
+        if conference.organizerUserId != user_id:
+            raise endpoints.UnauthorizedException('The user is not the conference organizer')
 
         # copy SessionForm/ProtoRPC Message into dict
         data = {field.name: getattr(request, field.name) for field in request.all_fields()}
