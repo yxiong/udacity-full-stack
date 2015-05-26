@@ -7,6 +7,7 @@
 script, it will create a database and inject with some initial data read from
 raw UTF-8 unicode files in the `data/` directory."""
 
+from datetime import datetime
 import json
 import os
 import os.path
@@ -18,6 +19,7 @@ from sqlalchemy import Sequence
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.types import DateTime
 from sqlalchemy.types import Integer
 from sqlalchemy.types import String
 from sqlalchemy.types import UnicodeText
@@ -41,6 +43,7 @@ class Category(Base):
     name = Column(String(255), nullable = False)
     description = Column(UnicodeText)
     wiki_url = Column(String(255))
+    last_modified = Column(DateTime)
 
     def short_description(self, n):
         """Return a short version of the description."""
@@ -61,6 +64,7 @@ class Item(Base):
     name = Column(String(255), nullable = False)
     description = Column(UnicodeText)
     wiki_url = Column(String(255))
+    last_modified = Column(DateTime)
     category_id = Column(Integer, ForeignKey("category.cid"))
 
     category = relationship(Category)
@@ -99,7 +103,9 @@ if __name__ == "__main__":
         session.add(Category(
             name = c["name"],
             description = c["description"],
-            wiki_url = c["wiki_url"]
+            wiki_url = c["wiki_url"],
+            last_modified = datetime.strptime(c["last_modified"],
+                                              "%d %b %Y, at %H:%M")
         ))
     session.commit()
 
@@ -116,6 +122,8 @@ if __name__ == "__main__":
             name = i["name"],
             category = categories_by_name[i["category"]],
             description = i["description"],
-            wiki_url = i["wiki_url"]
+            wiki_url = i["wiki_url"],
+            last_modified = datetime.strptime(i["last_modified"],
+                                              "%d %b %Y, at %H:%M")
         ))
     session.commit()
