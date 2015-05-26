@@ -342,7 +342,7 @@ def update_category_post(category_name):
     # Update description and wiki url, and update into database.
     category.description = request.form["description"]
     category.wiki_url = request.form["wiki"]
-    category.datetime = datetime.now()
+    category.last_modified = datetime.now()
     db_session.add(category)
     db_session.commit()
     flash("The category has been updated.")
