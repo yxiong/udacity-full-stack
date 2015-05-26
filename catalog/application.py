@@ -3,6 +3,7 @@
 # Author: Ying Xiong.
 # Created: May 11, 2015.
 
+from datetime import datetime
 from functools import wraps
 import json
 import os
@@ -216,7 +217,8 @@ def create_category_post():
     # Create a `Category` object and add into database.
     category = Category(name=name,
                         description = request.form["description"],
-                        wiki_url = request.form["wiki"])
+                        wiki_url = request.form["wiki"],
+                        last_modified = datetime.now())
     db_session.add(category)
     db_session.commit()
     # Update in-memory cache.
@@ -254,7 +256,8 @@ def create_item_post(category_name):
     item = Item(name=name,
                 description = request.form["description"],
                 wiki_url = request.form["wiki"],
-                category = categories[category_name])
+                category = categories[category_name],
+                last_modified = datetime.now())
     db_session.add(item)
     db_session.commit()
     # Update in-memory cache.
@@ -339,6 +342,7 @@ def update_category_post(category_name):
     # Update description and wiki url, and update into database.
     category.description = request.form["description"]
     category.wiki_url = request.form["wiki"]
+    category.datetime = datetime.now()
     db_session.add(category)
     db_session.commit()
     flash("The category has been updated.")
@@ -383,6 +387,7 @@ def update_item_post(category_name, item_name):
     # Update description and wiki url and update into database.
     item.description = request.form["description"]
     item.wiki_url = request.form["wiki"]
+    item.last_modified = datetime.now()
     db_session.add(item)
     db_session.commit()
     flash("The item has been updated.")

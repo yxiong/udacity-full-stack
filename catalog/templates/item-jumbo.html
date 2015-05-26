@@ -1,6 +1,6 @@
 <h1>{{ item.name }}</h1>
 <h2>({{ item.category_name }})<br>
-  <small>Last modified: {{ item.last_modified }}</small>
+  <small>Last modified: {{ item.last_modified.strftime("%d %b %Y at %H:%M (UTC)") }}</small>
 </h2>
 <p>{{ item.description }}</p>
 <div>
