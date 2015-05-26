@@ -3,22 +3,31 @@
 # Author: Ying Xiong.
 # Created: May 11, 2015.
 
-from database_setup import Base, Category, Item, DATABASE_NAME
-from flask import Flask
-from flask import render_template, url_for, request, redirect, flash, jsonify
-from flask import session as login_session
-from flask.ext.seasurf import SeaSurf
 from functools import wraps
-import httplib2
 import json
-from oauth2client.client import flow_from_clientsecrets
-from oauth2client.client import FlowExchangeError
 import os
 import os.path
+
+from flask import flash
+from flask import Flask
+from flask import jsonify
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
+from flask import session as login_session
+from flask.ext.seasurf import SeaSurf
+import httplib2
+from oauth2client.client import flow_from_clientsecrets
+from oauth2client.client import FlowExchangeError
 import requests
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from database_setup import Base
+from database_setup import DATABASE_NAME
+from database_setup import Category
+from database_setup import Item
 
 app = Flask(__name__)
 # Secret key generated with `os.urandom(24)`.

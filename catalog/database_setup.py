@@ -10,10 +10,17 @@ raw UTF-8 unicode files in the `data/` directory."""
 import json
 import os
 import os.path
-from sqlalchemy import Column, ForeignKey, Sequence, create_engine
+
+from sqlalchemy import Column
+from sqlalchemy import create_engine
+from sqlalchemy import ForeignKey
+from sqlalchemy import Sequence
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker
-from sqlalchemy.types import Integer, String, UnicodeText
+from sqlalchemy.orm import relationship
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.types import Integer
+from sqlalchemy.types import String
+from sqlalchemy.types import UnicodeText
 
 DATABASE_NAME = "sqlite:///catalog.db"
 
