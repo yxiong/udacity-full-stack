@@ -24,6 +24,7 @@ csrf = SeaSurf(app)
 
 import catalog.create
 import catalog.data as data
+import catalog.delete
 import catalog.login as login
 import catalog.read
 import catalog.update
@@ -178,20 +179,6 @@ def delete_category(category_name):
     data.delete_category(category_name)
     flash("The category '{0}' has been deleted.".format(category_name))
     return redirect('/')
-
-
-@app.route("/d/<category_name>/<item_name>", methods=["POST"])
-@login.login_required
-def delete_item(category_name, item_name):
-    """Handle delete item request."""
-    # Delete the item from the database.
-    item = items[category_name][item_name]
-    db_session.delete(item)
-    db_session.commit()
-    # Delete from the in-memory cache as well.
-    del items[category_name][item_name]
-    flash("The item '{0}' has been deleted.".format(item_name))
-    return redirect(url_for('read_category', category_name = category_name))
 
 
 def category_to_json(category):

@@ -207,7 +207,6 @@ def update_item(mem_item):
     # Update in database.
     session = DBSession()
     db_item = session.query(DBItem).filter_by(iid = mem_item.iid).first()
-    print db_item
     db_item.name = mem_item.name
     db_item.description = mem_item.description
     db_item.wiki_url = mem_item.wiki_url
@@ -220,6 +219,22 @@ def update_item(mem_item):
     if items:
         items[mem_item.name] = mem_item
         cache.set("items/"+mem_item.category.name, items)
+
+
+def delete_item(mem_item):
+    """Delete an item in database and in cache."""
+    # Delete in database.
+    session = DBSession()
+    db_item = session.query(DBItem).filter_by(iid = mem_item.iid).first()
+    session.delete(db_item)
+    session.commit()
+    session.close()
+    # Update cache.
+    items = cache.get("items/"+mem_item.category.name)
+    if items:
+        del items[mem_item.name]
+        cache.set("items/"+mem_item.category.name, items)
+
 
 def change_item_name_in_cache(category_name, old_name, new_name):
     """Similar to `change_category_name_in_cache`, this function updates cache
