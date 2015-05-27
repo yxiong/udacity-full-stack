@@ -9,6 +9,21 @@ from catalog import app
 import catalog.data as data
 
 
+@app.route("/")
+def home():
+    """Render the home page."""
+    jumbotron = render_template("index-jumbo.html")
+    abstracts = [render_template("item-abstract.html", item=i)
+                 for i in data.get_latest_items()]
+    category_links = [render_template("category-link.html",
+                                      category=c, active=False)
+                      for c in data.get_categories().values()]
+    return render_template("view.html",
+                           jumbotron = jumbotron,
+                           abstracts = abstracts,
+                           category_links = category_links)
+
+
 @app.route("/r/<category_name>")
 def read_category(category_name):
     """Render read category page."""

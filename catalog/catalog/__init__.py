@@ -72,19 +72,3 @@ for item in db_session.query(Item).all():
     """
 
 
-@app.route("/")
-def home():
-    """Render the home page."""
-    jumbotron = render_template("index-jumbo.html")
-    abstracts = []
-    """
-    abstracts = [render_template("item-abstract.html", item=i)
-                 for d in items.values() for i in d.values()]
-    """
-    category_links = [render_template("category-link.html",
-                                      category=c, active=False)
-                      for c in data.get_categories().values()]
-    return render_template("view.html",
-                           jumbotron = jumbotron,
-                           abstracts = abstracts,
-                           category_links = category_links)

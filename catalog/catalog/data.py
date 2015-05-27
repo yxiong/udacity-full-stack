@@ -262,6 +262,11 @@ def add_item(mem_item):
     if items:
         items[mem_item.name] = mem_item
         cache.set("items/"+mem_item.category.name, items)
+    latest_items = cache.get("latest_items")
+    if latest_items:
+        latest_items.insert(0, mem_item)
+        latest_items.pop()
+        cache.set("latest_items", latest_items)
 
 
 def update_item(mem_item):
@@ -280,6 +285,15 @@ def update_item(mem_item):
     if items:
         items[mem_item.name] = mem_item
         cache.set("items/"+mem_item.category.name, items)
+    latest_items = cache.get("latest_items")
+    if latest_items:
+        item = next((i for i in latest_items if i.iid == mem_item.iid), None)
+        if item:
+            latest_items.remove(item)
+        else:
+            latest_items.pop()
+        latest_items.insert(0, mem_item)
+        cache.set("latest_items", latest_items)
 
 
 def delete_item(mem_item):
@@ -295,6 +309,13 @@ def delete_item(mem_item):
     if items:
         del items[mem_item.name]
         cache.set("items/"+mem_item.category.name, items)
+    # In case the deleted item is one of the latest, we evict the 'latest_items'
+    # cache because it takes another database query to replace the removed item.
+    latest_items = cache.get("latest_items")
+    if latest_items:
+        item = next((i for i in latest_items if i.iid == mem_item.iid), None)
+        if item:
+            cache.delete("latest_items")
 
 
 def change_item_name_in_cache(category_name, old_name, new_name):
@@ -305,3 +326,24 @@ def change_item_name_in_cache(category_name, old_name, new_name):
         items[new_name] = items[old_name]
         del items[old_name]
         cache.set("items/"+category_name, items)
+
+
+def get_latest_items():
+    """Retrieve the most recently modified items."""
+    # Check cache first.
+    latest_items = cache.get("latest_items")
+    if latest_items:
+        return latest_items
+    # Make a query to the database and copy the results to memory.
+    latest_items = []
+    num = 10
+    session = DBSession()
+    db_items = session.query(DBItem).order_by(
+        DBItem.last_modified.desc()).limit(num)
+    categories = get_categories().values()
+    for i in db_items:
+        category = next(c for c in categories if c.cid == i.category_id)
+        latest_items.append(MemItem.from_db_item(i, category))
+    session.close()
+    cache.set("latest_items", latest_items)
+    return latest_items
