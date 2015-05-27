@@ -7,24 +7,55 @@
 utilities include getting and putting data from and to database as well as
 memory cache, and keeping the two consistent."""
 
+import os.path
+
+from sqlalchemy import Column
 from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session
+from sqlalchemy import ForeignKey
+from sqlalchemy import Sequence
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.types import DateTime
+from sqlalchemy.types import Integer
+from sqlalchemy.types import String
+from sqlalchemy.types import UnicodeText
 from werkzeug.contrib.cache import SimpleCache
 
 from catalog import app
 
-# TODO: These classes should be moved in this module.
-from database_setup import Base
-from database_setup import DATABASE_NAME
-from database_setup import Category as DBCategory
-from database_setup import Item as DBItem
+
+_this_file_path = os.path.dirname(os.path.realpath(__file__))
+DATABASE_NAME = "sqlite:///%s/catalog.db" % _this_file_path
 
 
 engine = create_engine(DATABASE_NAME)
+Base = declarative_base()
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind = engine)
-db_session = scoped_session(sessionmaker(bind = engine))
+
+
+class DBCategory(Base):
+    __tablename__ = "category"
+
+    cid = Column(Integer, Sequence("cid_seq"), primary_key = True)
+    name = Column(String(255), nullable = False)
+    description = Column(UnicodeText)
+    wiki_url = Column(String(255))
+    last_modified = Column(DateTime)
+
+
+class DBItem(Base):
+    __tablename__ = "item"
+
+    iid = Column(Integer, Sequence("iid_seq"), primary_key = True)
+    name = Column(String(255), nullable = False)
+    description = Column(UnicodeText)
+    wiki_url = Column(String(255))
+    last_modified = Column(DateTime)
+    category_id = Column(Integer, ForeignKey("category.cid"))
+
+    category = relationship(DBCategory)
 
 
 # Currently we cache following objects:

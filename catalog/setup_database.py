@@ -12,51 +12,12 @@ import json
 import os
 import os.path
 
-from sqlalchemy import Column
-from sqlalchemy import create_engine
-from sqlalchemy import ForeignKey
-from sqlalchemy import Sequence
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.types import DateTime
-from sqlalchemy.types import Integer
-from sqlalchemy.types import String
-from sqlalchemy.types import UnicodeText
-
-DATABASE_NAME = "sqlite:///catalog.db"
-
-Base = declarative_base()
-
-def abbrev_text(text, n):
-    """Abbreviate the input `text` to a maximum length `n`."""
-    if len(text) < n:
-        return text
-    # Cut off at a whole word (delimited by space).
-    cutoff = text.rfind(' ', 0, n-3)
-    return text[:cutoff] + "..."
-
-class Category(Base):
-    __tablename__ = "category"
-
-    cid = Column(Integer, Sequence("cid_seq"), primary_key = True)
-    name = Column(String(255), nullable = False)
-    description = Column(UnicodeText)
-    wiki_url = Column(String(255))
-    last_modified = Column(DateTime)
-
-
-class Item(Base):
-    __tablename__ = "item"
-
-    iid = Column(Integer, Sequence("iid_seq"), primary_key = True)
-    name = Column(String(255), nullable = False)
-    description = Column(UnicodeText)
-    wiki_url = Column(String(255))
-    last_modified = Column(DateTime)
-    category_id = Column(Integer, ForeignKey("category.cid"))
-
-    category = relationship(Category)
+from catalog.data import Base
+from catalog.data import DATABASE_NAME
+from catalog.data import DBCategory as Category
+from catalog.data import DBItem as Item
+from catalog.data import DBSession
+from catalog.data import engine
 
 
 if __name__ == "__main__":
@@ -64,13 +25,8 @@ if __name__ == "__main__":
     if DATABASE_NAME == "sqlite:///catalog.db" and os.path.exists("catalog.db"):
         os.remove("catalog.db")
 
-    # Create the database.
-    engine = create_engine(DATABASE_NAME)
+    # Create the database and make a session from the engine.
     Base.metadata.create_all(engine)
-
-    # Make a session from the database engine.
-    Base.metadata.bind = engine
-    DBSession = sessionmaker(bind = engine)
     session = DBSession()
 
     # Read category file and inject into database.
