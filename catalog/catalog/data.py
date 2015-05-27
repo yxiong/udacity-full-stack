@@ -25,6 +25,9 @@ from werkzeug.contrib.cache import SimpleCache
 from catalog import app
 
 
+################################################################
+# Configurations and models for database.
+################################################################
 _this_file_path = os.path.dirname(os.path.realpath(__file__))
 DATABASE_NAME = "sqlite:///%s/catalog.db" % _this_file_path
 
@@ -58,14 +61,18 @@ class DBItem(Base):
     category = relationship(DBCategory)
 
 
-# Currently we cache following objects:
+################################################################################
+# Configurations and models for cache. Currently we cache following objects:
 #
 # * "categories": this is a dictionary whose key is a the category name (which
-#   should be unique) and value is a `Category` object.
+#   should be unique) and value is a `MemCategory` object.
 #
 # * "items/<category_name>": there is a dictionary for each `category_name`, and
 #   the key of the dictionary is the item name (which should be unique within a
-#   category) and the value is an `Item` object.
+#   category) and the value is an `MemItem` object.
+#
+# * "latest_items": this is a list of `MemItem`s ordered by last modified time.
+################################################################################
 cache = SimpleCache()
 
 
@@ -221,6 +228,9 @@ def delete_category(mem_category):
     if categories:
         del categories[mem_category.name]
         cache.set("categories", categories)
+    # Deleting a category will very likely remove one of the latest items.
+    # Therefore we evict the cache.
+    cache.delete("latest_items")
 
 
 def change_category_name_in_cache(old_name, new_name):
