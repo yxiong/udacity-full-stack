@@ -89,38 +89,6 @@ def home():
                            category_links = category_links)
 
 
-@app.route("/c/category")
-@login.login_required
-def create_category():
-    """Render create category page."""
-    category = Category(name="Category name",
-                        description="Add some description.",
-                        wiki_url = "http://www.wikipedia.org/xxx")
-    return render_template("edit.html",
-                           title = "Create a category.",
-                           entity = category,
-                           cancel_url = '/')
-
-
-@app.route("/c/category", methods=["POST"])
-@login.login_required
-def create_category_post():
-    """Handle create category request."""
-    name = request.form["name"]
-    # Make sure the category name does not already exist.
-    if name in data.get_categories():
-        flash("Error: The category name '{0}' already exists.".format(name))
-        return redirect(url_for('create_category'))
-    # Create a `Category` object and add into database.
-    category = Category(name=name,
-                        description = request.form["description"],
-                        wiki_url = request.form["wiki"],
-                        last_modified = datetime.now())
-    data.add_category(category)
-    flash("The category has been added.")
-    return redirect(url_for('read_category', category_name = name))
-
-
 @app.route("/u/<category_name>", methods=["GET"])
 @login.login_required
 def update_category(category_name):

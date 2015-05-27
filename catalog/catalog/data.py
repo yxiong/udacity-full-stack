@@ -17,7 +17,7 @@ from catalog import app
 # TODO: These classes should be moved in this module.
 from database_setup import Base
 from database_setup import DATABASE_NAME
-from database_setup import Category
+from database_setup import Category as DBCategory
 from database_setup import Item as DBItem
 
 
@@ -61,7 +61,7 @@ class MemCategory():
                    db_category.name,
                    db_category.description,
                    db_category.wiki_url,
-                   db.last_modified)
+                   db_category.last_modified)
 
 
 class MemItem():
@@ -89,16 +89,20 @@ class MemItem():
 
 
 ################################################################
-# Utilities for getting and putting `Category`s.
+# Utilities for getting and putting categories.
 ################################################################
 def get_categories():
     """Get all categories in the database (likely from cache)."""
+    # Check cache first.
     categories = cache.get("categories")
     if categories:
         return categories
+    # Make a query to the database and copy the results to memory.
     categories = {}
-    for c in db_session.query(Category).all():
-        categories[c.name] = c
+    session = DBSession()
+    for c in session.query(DBCategory).all():
+        categories[c.name] = MemCategory.from_db_category(c)
+    session.close()
     cache.set("categories", categories)
     return categories
 
@@ -108,16 +112,22 @@ def get_category(category_name):
     return get_categories().get(category_name, None)
 
 
-def add_category(category):
-    """Add a category to the database and keep the cache consistent. This also
-    works if the `category` is already in the database, in which case an update
-    operation will be performed. However, if the category name is changed during
-    the update, one needs to call `change_category_name_in_cache` first."""
-    db_session.add(category)
-    db_session.commit()
+def add_category(mem_category):
+    """Add a category to the database and keep the cache consistent."""
+    # Add to database.
+    db_category = DBCategory(name = mem_category.name,
+                             description = mem_category.description,
+                             wiki_url = mem_category.wiki_url,
+                             last_modified = mem_category.last_modified)
+    session = DBSession()
+    session.add(db_category)
+    session.commit()
+    mem_category.cid = db_category.cid
+    session.close()
+    # Update cache.
     categories = cache.get("categories")
     if categories:
-        categories[category.name] = category
+        categories[mem_category.name] = mem_category
         cache.set("categories", categories)
 
 
@@ -164,8 +174,7 @@ def get_items(category_name):
     # Make a query to the database and copy the results to memory.
     items = {}
     session = DBSession()
-    for i in session.query(DBItem).filter(
-            DBItem.category_id == category.cid).all():
+    for i in session.query(DBItem).filter_by(category_id = category.cid).all():
         items[i.name] = MemItem.from_db_item(i, category)
     session.close()
     cache.set("items/"+category_name, items)

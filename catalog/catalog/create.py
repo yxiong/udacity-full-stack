@@ -13,8 +13,44 @@ from flask import url_for
 
 from catalog import app
 import catalog.data as data
+from catalog.data import MemCategory as Category
 from catalog.data import MemItem as Item
 import catalog.login as login
+
+
+@app.route("/c/category")
+@login.login_required
+def create_category():
+    """Render create category page."""
+    category = Category(cid = None,
+                        name = "Category name",
+                        description = "Add some description.",
+                        wiki_url = "http://www.wikipedia.org/xxx",
+                        last_modified = datetime.now())
+    return render_template("edit.html",
+                           title = "Create a category.",
+                           entity = category,
+                           cancel_url = '/')
+
+
+@app.route("/c/category", methods=["POST"])
+@login.login_required
+def create_category_post():
+    """Handle create category request."""
+    # Make sure the category name does not already exist.
+    name = request.form["name"]
+    if name in data.get_categories():
+        flash("Error: The category name '{0}' already exists.".format(name))
+        return redirect(url_for('create_category'))
+    # Create a `Category` object and add into database.
+    category = Category(cid = None,
+                        name = name,
+                        description = request.form["description"],
+                        wiki_url = request.form["wiki"],
+                        last_modified = datetime.now())
+    data.add_category(category)
+    flash("The category has been added.")
+    return redirect(url_for('read_category', category_name = name))
 
 
 @app.route("/c/<category_name>/item")
