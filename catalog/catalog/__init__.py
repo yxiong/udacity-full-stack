@@ -159,24 +159,6 @@ def create_item_post(category_name):
                             item_name = name))
 
 
-@app.route("/r/<category_name>/<item_name>")
-def read_item(category_name, item_name):
-    """Render read item page."""
-    categories = data.get_categories()
-    if category_name not in categories or item_name not in items[category_name]:
-        return "Not Found", 404
-    category = categories[category_name]
-    item = items[category_name][item_name]
-    jumbotron = render_template("item-jumbo.html", item = item)
-    category_links = [render_template("category-link.html",
-                                      category=c, active=(c==category))
-                      for c in categories.values()]
-    return render_template("view.html",
-                           jumbotron = jumbotron,
-                           abstracts = [],
-                           category_links = category_links)
-
-
 @app.route("/u/<category_name>", methods=["GET"])
 @login.login_required
 def update_category(category_name):
