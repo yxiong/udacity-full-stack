@@ -25,7 +25,8 @@ csrf = SeaSurf(app)
 import catalog.create
 import catalog.data as data
 import catalog.login as login
-import catalog.view
+import catalog.read
+import catalog.update
 
 
 # TODO: These import might not necessary or should be from `catalog.data`.
@@ -161,53 +162,6 @@ def update_category_post(category_name):
     data.add_category(category)
     flash("The category has been updated.")
     return redirect(url_for('read_category', category_name = new_name))
-
-
-@app.route("/u/<category_name>/<item_name>")
-@login.login_required
-def update_item(category_name, item_name):
-    """Render update item page."""
-    item = items[category_name][item_name]
-    cancel_url = url_for('read_item',
-                         category_name = category_name,
-                         item_name = item_name)
-    return render_template("edit.html",
-                           title = "Edit an item.",
-                           entity = item,
-                           cancel_url = cancel_url)
-
-
-@app.route("/u/<category_name>/<item_name>", methods=["POST"])
-@login.login_required
-def update_item_post(category_name, item_name):
-    """Handle update item request."""
-    category = data.get_category(category_name)
-    item = items[category_name][item_name]
-    # Check if the item name has changed.
-    old_name = item.name
-    new_name = request.form["name"]
-    if old_name != new_name:
-        # Make sure the new name does not already exist in this category.
-        if new_name in items[category_name]:
-            flash("Error: The item name '{0}' already exists"
-                  "in this category.".format(new_name))
-            return redirect(url_for('update_item',
-                                    category_name = category_name,
-                                    item_name = item_name))
-        # Update the in-memory cache about the item name change.
-        items[category_name][new_name] = items[category_name][old_name]
-        del items[category_name][old_name]
-        item.name = new_name
-    # Update description and wiki url and update into database.
-    item.description = request.form["description"]
-    item.wiki_url = request.form["wiki"]
-    item.last_modified = datetime.now()
-    db_session.add(item)
-    db_session.commit()
-    flash("The item has been updated.")
-    return redirect(url_for('read_item',
-                            category_name = category_name,
-                            item_name = new_name))
 
 
 @app.route("/d/<category_name>", methods=["POST"])

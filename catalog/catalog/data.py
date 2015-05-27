@@ -135,8 +135,8 @@ def delete_category(category_name):
 def change_category_name_in_cache(old_name, new_name):
     """Since we use category name as key for cache and cached dictionaries, this
     function needs to be called whenever a category name changes. This function
-    only update cache keys but not change the category object itself or touch
-    the database."""
+    only updates cache keys but does not change the category object in cache or
+    touch the database."""
     categories = cache.get("categories")
     if categories:
         categories[new_name] = categories[old_name]
@@ -172,7 +172,18 @@ def get_items(category_name):
     return items
 
 
+def get_item(category_name, item_name):
+    """Get the item by category name and item name. Return `None` if either
+    argument is invalid."""
+    items = get_items(category_name)
+    if not items:
+        return None
+    else:
+        return items.get(item_name, None)
+
+
 def add_item(mem_item):
+    """Add an item to database and update the cache correspondingly."""
     # Add to database.
     db_item = DBItem(name = mem_item.name,
                      description = mem_item.description,
@@ -184,8 +195,37 @@ def add_item(mem_item):
     session.commit()
     mem_item.iid = db_item.iid
     session.close()
-    # Update in cache.
+    # Update cache.
     items = cache.get("items/"+mem_item.category.name)
     if items:
         items[mem_item.name] = mem_item
         cache.set("items/"+mem_item.category.name, items)
+
+
+def update_item(mem_item):
+    """Update an item in database and in cache."""
+    # Update in database.
+    session = DBSession()
+    db_item = session.query(DBItem).filter_by(iid = mem_item.iid).first()
+    print db_item
+    db_item.name = mem_item.name
+    db_item.description = mem_item.description
+    db_item.wiki_url = mem_item.wiki_url
+    db_item.last_modified = mem_item.last_modified
+    db_item.category_id = mem_item.category.cid
+    session.commit()
+    session.close()
+    # Update cache.
+    items = cache.get("items/"+mem_item.category.name)
+    if items:
+        items[mem_item.name] = mem_item
+        cache.set("items/"+mem_item.category.name, items)
+
+def change_item_name_in_cache(category_name, old_name, new_name):
+    """Similar to `change_category_name_in_cache`, this function updates cache
+    keys but does not change the item object in cache or in the database."""
+    items = cache.get("items/"+category_name)
+    if items:
+        items[new_name] = items[old_name]
+        del items[old_name]
+        cache.set("items/"+category_name, items)
