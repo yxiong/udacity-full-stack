@@ -77,12 +77,13 @@ class MemCategory():
 class MemItem():
     def __init__(self, category, iid, name, description, wiki_url,
                  last_modified):
-        self.category = category
         self.iid = iid
         self.name = name
         self.description = description
         self.wiki_url = wiki_url
         self.last_modified = last_modified
+        self.category_id = category.cid
+        self.category_name = category.name
 
     def short_description(self, n):
         """Return a short version of the description."""
@@ -194,17 +195,28 @@ def delete_category(mem_category):
 def change_category_name_in_cache(old_name, new_name):
     """Since we use category name as key for cache and cached dictionaries, this
     function needs to be called whenever a category name changes. This function
-    only updates cache keys but does not change the category object in cache or
-    touch the database."""
+    only updates cache keys and cached objects but does not touch the
+    database."""
+    # Update `categories` in cache.
     categories = cache.get("categories")
     if categories:
         categories[new_name] = categories[old_name]
         del categories[old_name]
+        categories[new_name].name = new_name
         cache.set("categories", categories)
+    # Update `items/<category_name>` in cache.
     items = cache.get("items/"+old_name)
     if items:
         cache.delete("items/"+old_name)
+        for i in items.values():
+            i.category_name = new_name
         cache.set("items/"+new_name, items)
+    # Update `latest_items` in cache.
+    latest_items = cache.get("latest_items")
+    if latest_items:
+        for item in [i for i in latest_items if i.category_name==old_name]:
+            item.category_name = new_name
+        cache.set("latest_items", latest_items)
 
 
 ################################################################
@@ -258,10 +270,10 @@ def add_item(mem_item):
     mem_item.iid = db_item.iid
     session.close()
     # Update cache.
-    items = cache.get("items/"+mem_item.category.name)
+    items = cache.get("items/"+mem_item.category_name)
     if items:
         items[mem_item.name] = mem_item
-        cache.set("items/"+mem_item.category.name, items)
+        cache.set("items/"+mem_item.category_name, items)
     latest_items = cache.get("latest_items")
     if latest_items:
         latest_items.insert(0, mem_item)
@@ -281,10 +293,10 @@ def update_item(mem_item):
     session.commit()
     session.close()
     # Update cache.
-    items = cache.get("items/"+mem_item.category.name)
+    items = cache.get("items/"+mem_item.category_name)
     if items:
         items[mem_item.name] = mem_item
-        cache.set("items/"+mem_item.category.name, items)
+        cache.set("items/"+mem_item.category_name, items)
     latest_items = cache.get("latest_items")
     if latest_items:
         item = next((i for i in latest_items if i.iid == mem_item.iid), None)
@@ -305,10 +317,10 @@ def delete_item(mem_item):
     session.commit()
     session.close()
     # Update cache.
-    items = cache.get("items/"+mem_item.category.name)
+    items = cache.get("items/"+mem_item.category_name)
     if items:
         del items[mem_item.name]
-        cache.set("items/"+mem_item.category.name, items)
+        cache.set("items/"+mem_item.category_name, items)
     # In case the deleted item is one of the latest, we evict the 'latest_items'
     # cache because it takes another database query to replace the removed item.
     latest_items = cache.get("latest_items")
@@ -320,12 +332,20 @@ def delete_item(mem_item):
 
 def change_item_name_in_cache(category_name, old_name, new_name):
     """Similar to `change_category_name_in_cache`, this function updates cache
-    keys but does not change the item object in cache or in the database."""
+    keys and cached objects but does not touch the database."""
     items = cache.get("items/"+category_name)
     if items:
         items[new_name] = items[old_name]
         del items[old_name]
+        items[new_name].name = new_name
         cache.set("items/"+category_name, items)
+    latest_items = cache.get("latest_items")
+    if latest_items:
+        item = next((i for i in latest_items if i.iid == items[new_name].iid),
+                    None)
+        if item:
+            item.name = new_name
+            cache.set("latest_items", latest_items)
 
 
 def get_latest_items():

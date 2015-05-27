@@ -1,5 +1,5 @@
 <h1>{{ item.name }}</h1>
-<h2>({{ item.category.name }})<br>
+<h2>({{ item.category_name }})<br>
   <small>Last modified: {{ item.last_modified.strftime("%d %b %Y at %H:%M (UTC)") }}</small>
 </h2>
 <p>{{ item.description }}</p>
@@ -11,13 +11,13 @@
 
   <a class="btn btn-warning"
      role="button"
-     href="{{ url_for('update_item', category_name=item.category.name, item_name=item.name) }}"
+     href="{{ url_for('update_item', category_name=item.category_name, item_name=item.name) }}"
      {% if "username" not in session %} disabled {% endif %}>
     Edit
   </a>
 
   <form style="display:inline;"
-        action="{{ url_for('delete_item', category_name=item.category.name, item_name=item.name) }}"
+        action="{{ url_for('delete_item', category_name=item.category_name, item_name=item.name) }}"
         method="post">
     <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
     <button type="submit" class="btn btn-danger"
