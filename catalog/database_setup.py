@@ -45,17 +45,6 @@ class Category(Base):
     wiki_url = Column(String(255))
     last_modified = Column(DateTime)
 
-    def short_description(self, n):
-        """Return a short version of the description."""
-        return abbrev_text(self.description, n)
-
-    def __unicode__(self):
-        return u"{0}: {1}. {2} [{3}]".format(
-            self.cid, self.name, self.short_description(40), self.wiki_url)
-
-    def __str__(self):
-        return unicode(self).encode("utf-8")
-
 
 class Item(Base):
     __tablename__ = "item"
@@ -68,18 +57,6 @@ class Item(Base):
     category_id = Column(Integer, ForeignKey("category.cid"))
 
     category = relationship(Category)
-
-    def short_description(self, n):
-        """Return a short version of the description."""
-        return abbrev_text(self.description, n)
-
-    def __unicode__(self):
-        return u"{0}: {1} (cid: {2}). {3} [{4}]".format(
-            self.iid, self.name, self.category_id,
-            self.short_description(40), self.wiki_url)
-
-    def __str__(self):
-        return unicode(self).encode("utf-8")
 
 
 if __name__ == "__main__":

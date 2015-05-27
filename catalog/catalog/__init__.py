@@ -24,6 +24,7 @@ csrf = SeaSurf(app)
 
 import catalog.data as data
 import catalog.login as login
+import catalog.view
 
 
 # TODO: These import might not necessary or should be from `catalog.data`.
@@ -31,6 +32,12 @@ from database_setup import Base
 from database_setup import DATABASE_NAME
 from database_setup import Category
 from database_setup import Item
+
+# TODO: We should not need db_session in this module.
+from sqlalchemy.orm import scoped_session
+from sqlalchemy.orm import sessionmaker
+db_session = scoped_session(sessionmaker(bind = data.engine))
+
 
 
 # Secret key generated with `os.urandom(24)`.
@@ -51,20 +58,25 @@ items = {}
 
 # Read the categories and items from database into memory.
 for category_name in data.get_categories():
-    items[category_name] = {}
-for item in data.db_session.query(Item).all():
+    items[category_name] = data.get_items(category_name)
+    """
+for item in db_session.query(Item).all():
     cname = [c for c in data.get_categories().values()
              if c.cid == item.category_id][0].name
     item.category_name = cname
     items.setdefault(cname, {})[item.name] = item
+    """
 
 
 @app.route("/")
 def home():
     """Render the home page."""
     jumbotron = render_template("index-jumbo.html")
+    abstracts = []
+    """
     abstracts = [render_template("item-abstract.html", item=i)
                  for d in items.values() for i in d.values()]
+    """
     category_links = [render_template("category-link.html",
                                       category=c, active=False)
                       for c in data.get_categories().values()]
@@ -136,8 +148,8 @@ def create_item_post(category_name):
                 wiki_url = request.form["wiki"],
                 category = categories[category_name],
                 last_modified = datetime.now())
-    data.db_session.add(item)
-    data.db_session.commit()
+    db_session.add(item)
+    db_session.commit()
     # Update in-memory cache.
     item.category_name = category_name
     items[category_name][name] = item
@@ -145,25 +157,6 @@ def create_item_post(category_name):
     return redirect(url_for('read_item',
                             category_name = category_name,
                             item_name = name))
-
-
-@app.route("/r/<category_name>")
-def read_category(category_name):
-    """Render read category page."""
-    categories = data.get_categories()
-    if category_name not in categories:
-        return "Not Found", 404
-    category = categories[category_name]
-    jumbotron = render_template("category-jumbo.html", category = category)
-    abstracts = [render_template("item-abstract.html", item=i)
-                 for i in items[category_name].values()]
-    category_links = [render_template("category-link.html",
-                                      category=c, active=(c==category))
-                      for c in categories.values()]
-    return render_template("view.html",
-                           jumbotron = jumbotron,
-                           abstracts = abstracts,
-                           category_links = category_links)
 
 
 @app.route("/r/<category_name>/<item_name>")
@@ -267,8 +260,8 @@ def update_item_post(category_name, item_name):
     item.description = request.form["description"]
     item.wiki_url = request.form["wiki"]
     item.last_modified = datetime.now()
-    data.db_session.add(item)
-    data.db_session.commit()
+    db_session.add(item)
+    db_session.commit()
     flash("The item has been updated.")
     return redirect(url_for('read_item',
                             category_name = category_name,
@@ -282,7 +275,7 @@ def delete_category(category_name):
     # First delete the items inside the category.
     for item in items[category_name].values():
         # TODO
-        # data.db_session.delete(item)
+        # db_session.delete(item)
         pass
     del items[category_name]
     # Then delete the category itself.
@@ -297,8 +290,8 @@ def delete_item(category_name, item_name):
     """Handle delete item request."""
     # Delete the item from the database.
     item = items[category_name][item_name]
-    data.db_session.delete(item)
-    data.db_session.commit()
+    db_session.delete(item)
+    db_session.commit()
     # Delete from the in-memory cache as well.
     del items[category_name][item_name]
     flash("The item '{0}' has been deleted.".format(item_name))

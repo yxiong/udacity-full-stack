@@ -1,8 +1,8 @@
 <div class="col-xs-6 col-lg-4">
   <h2>{{ item.name }}</h2>
-  <h4>({{ item.category_name }})<br>
+  <h4>({{ item.category.name }})<br>
     <small>{{ item.last_modified.strftime("%d %b %Y at %H:%M (UTC)") }}</small>
   </h4>
   <p>{{ item.short_description(200) }}</p>
-  <p><a class="btn btn-default" href="{{ url_for('read_item', category_name=item.category_name, item_name=item.name) }}" role="button">View details &raquo;</a></p>
+  <p><a class="btn btn-default" href="{{ url_for('read_item', category_name=item.category.name, item_name=item.name) }}" role="button">View details &raquo;</a></p>
 </div>

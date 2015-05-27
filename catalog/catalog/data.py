@@ -27,11 +27,69 @@ db_session = scoped_session(sessionmaker(bind = engine))
 
 
 # Currently we cache following objects:
+#
 # * "categories": this is a dictionary whose key is a the category name (which
 #   should be unique) and value is a `Category` object.
+#
+# * "items/<category_name>": there is a dictionary for each `category_name`, and
+#   the key of the dictionary is the item name (which should be unique within a
+#   category) and the value is an `Item` object.
 cache = SimpleCache()
 
 
+def abbrev_text(text, n):
+    """Abbreviate the input `text` to a maximum length `n`."""
+    if len(text) < n:
+        return text
+    # Cut off at a whole word (delimited by space).
+    cutoff = text.rfind(' ', 0, n-3)
+    return text[:cutoff] + "..."
+
+
+class MemCategory():
+    def __init__(self, cid, name, description, wiki_url, last_modified):
+        self.cid = cid
+        self.name = name
+        self.description = description
+        self.wiki_url = wiki_url
+        self.last_modified = last_modified
+
+    @classmethod
+    def from_db_category(cls, db_category):
+        return cls(db_category.cid,
+                   db_category.name,
+                   db_category.description,
+                   db_category.wiki_url,
+                   db.last_modified)
+
+
+class MemItem():
+    def __init__(self, category, iid, name, description, wiki_url,
+                 last_modified):
+        self.category = category
+        self.iid = iid
+        self.name = name
+        self.description = description
+        self.wiki_url = wiki_url
+        self.last_modified = last_modified
+
+    def short_description(self, n):
+        """Return a short version of the description."""
+        return abbrev_text(self.description, n)
+
+    @classmethod
+    def from_db_item(cls, db_item, mem_category):
+        return cls(mem_category,
+                   db_item.iid,
+                   db_item.name,
+                   db_item.description,
+                   db_item.wiki_url,
+                   db_item.last_modified)
+
+
+################################################################
+# Utilities for getting and putting `Category`s.
+################################################################
 def get_categories():
     """Get all categories in the database (likely from cache)."""
     categories = cache.get("categories")
@@ -83,3 +141,22 @@ def change_category_name_in_cache(old_name, new_name):
         categories[new_name] = categories[old_name]
         del categories[old_name]
         cache.set("categories", categories)
+
+
+################################################################
+# Utilities for getting and putting `Item`s.
+################################################################
+def get_items(category_name):
+    """Get all items that belongs to the given category."""
+    # Check cache first.
+    items = cache.get("items/"+category_name)
+    if items:
+        return items
+    # Make a query to the database and copy the results to memory.
+    items = {}
+    category = get_category(category_name)
+    for i in db_session.query(Item).filter(
+            Item.category_id == category.cid).all():
+        items[i.name] = MemItem.from_db_item(i, category)
+    cache.set("items/"+category_name, items)
+    return items
