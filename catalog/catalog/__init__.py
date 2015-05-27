@@ -89,22 +89,6 @@ def home():
                            category_links = category_links)
 
 
-@app.route("/d/<category_name>", methods=["POST"])
-@login.login_required
-def delete_category(category_name):
-    """Handle delete category request."""
-    # First delete the items inside the category.
-    for item in items[category_name].values():
-        # TODO
-        # db_session.delete(item)
-        pass
-    del items[category_name]
-    # Then delete the category itself.
-    data.delete_category(category_name)
-    flash("The category '{0}' has been deleted.".format(category_name))
-    return redirect('/')
-
-
 def category_to_json(category):
     """Return a 'json-ready' dictionary that contains category name,
     description, wiki url, as well as all the items of this category inside
