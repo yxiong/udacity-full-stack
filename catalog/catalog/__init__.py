@@ -22,6 +22,7 @@ app = Flask(__name__)
 csrf = SeaSurf(app)
 
 
+import catalog.api
 import catalog.create
 import catalog.data as data
 import catalog.delete
@@ -87,47 +88,3 @@ def home():
                            jumbotron = jumbotron,
                            abstracts = abstracts,
                            category_links = category_links)
-
-
-def category_to_json(category):
-    """Return a 'json-ready' dictionary that contains category name,
-    description, wiki url, as well as all the items of this category inside
-    this list."""
-    return {
-        "name": category.name,
-        "description": category.description,
-        "wiki_url": category.wiki_url,
-        "items": [item_to_json(i)
-                  for i in items[category.name].values()]
-    }
-
-
-def item_to_json(item):
-    """Return a 'json-ready' dictionary that contains the item name,
-    description, wiki url. Note that the category information is not contained
-    in this dictionary."""
-    return {
-        "name": item.name,
-        "description": item.description,
-        "wiki_url": item.wiki_url
-    }
-
-
-@app.route("/j/")
-def api_json():
-    """Return a json object containing all categories and items."""
-    return jsonify(categories = [category_to_json(c)
-                                 for c in categories.values()])
-
-
-@app.route("/j/<category_name>")
-def api_json_category(category_name):
-    """Return a json object containing information of the requested category."""
-    category = data.get_category(category_name)
-    return jsonify(category = category_to_json(category))
-
-
-@app.route("/j/<category_name>/<item_name>")
-def api_json_item(category_name, item_name):
-    """Return a json object containing information of the requested item."""
-    return jsonify(item = item_to_json(items[category_name][item_name]))

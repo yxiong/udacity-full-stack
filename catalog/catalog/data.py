@@ -64,6 +64,16 @@ class MemCategory():
                    db_category.last_modified)
 
 
+    def to_json(self):
+        """Return a 'json-ready' dictionary."""
+        return {
+            "name": self.name,
+            "description": self.description,
+            "wiki_url": self.wiki_url,
+            "last_modified": self.last_modified
+        }
+
+
 class MemItem():
     def __init__(self, category, iid, name, description, wiki_url,
                  last_modified):
@@ -86,6 +96,16 @@ class MemItem():
                    db_item.description,
                    db_item.wiki_url,
                    db_item.last_modified)
+
+
+    def to_json(self):
+        """Return a 'json-ready' dictionary."""
+        return {
+            "name": self.name,
+            "description": self.description,
+            "wiki_url": self.wiki_url,
+            "last_modified": self.last_modified
+        }
 
 
 ################################################################
