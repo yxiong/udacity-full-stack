@@ -89,50 +89,6 @@ def home():
                            category_links = category_links)
 
 
-@app.route("/u/<category_name>", methods=["GET"])
-@login.login_required
-def update_category(category_name):
-    """Render update category page."""
-    category = data.get_category(category_name)
-    cancel_url = url_for('read_category', category_name = category_name)
-    return render_template("edit.html",
-                           title = "Edit a category.",
-                           entity = category,
-                           cancel_url = cancel_url)
-
-
-@app.route("/u/<category_name>", methods=["POST"])
-@login.login_required
-def update_category_post(category_name):
-    """Handle update category request."""
-    categories = data.get_categories()
-    category = categories[category_name]
-    # Check if the category name has changed.
-    old_name = category.name
-    new_name = request.form["name"]
-    if old_name != new_name:
-        # Make sure the new name does not already exist.
-        if new_name in categories:
-            flash("Error: The category name '{0}' already exists.".format(
-                new_name))
-            return redirect(url_for('update_category',
-                                    category_name = old_name))
-        # Update the in-memory cache about the category name change.
-        items[new_name] = items[old_name]
-        del items[old_name]
-        for item in items[new_name].values():
-            item.category_name = new_name
-        data.change_category_name_in_cache(old_name, new_name)
-        category.name = new_name
-    # Update description and wiki url, and update into database.
-    category.description = request.form["description"]
-    category.wiki_url = request.form["wiki"]
-    category.last_modified = datetime.now()
-    data.add_category(category)
-    flash("The category has been updated.")
-    return redirect(url_for('read_category', category_name = new_name))
-
-
 @app.route("/d/<category_name>", methods=["POST"])
 @login.login_required
 def delete_category(category_name):

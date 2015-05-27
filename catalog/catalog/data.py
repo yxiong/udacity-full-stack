@@ -131,6 +131,25 @@ def add_category(mem_category):
         cache.set("categories", categories)
 
 
+def update_category(mem_category):
+    """Update a category in database and in cache."""
+    # Update the database.
+    session = DBSession()
+    db_category = session.query(DBCategory).filter_by(
+        cid = mem_category.cid).first()
+    db_category.name = mem_category.name
+    db_category.description = mem_category.description
+    db_category.wiki_url = mem_category.wiki_url
+    db_category.last_modified = mem_category.last_modified
+    session.commit()
+    session.close()
+    # Update cache.
+    categories = cache.get("categories")
+    if categories:
+        categories[mem_category.name] = mem_category
+        cache.set("categories", categories)
+
+
 def delete_category(category_name):
     """Delete a category from the database and the cache."""
     category = get_category(category_name)
@@ -220,7 +239,6 @@ def update_item(mem_item):
     db_item.description = mem_item.description
     db_item.wiki_url = mem_item.wiki_url
     db_item.last_modified = mem_item.last_modified
-    db_item.category_id = mem_item.category.cid
     session.commit()
     session.close()
     # Update cache.

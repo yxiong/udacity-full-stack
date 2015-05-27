@@ -16,6 +16,51 @@ import catalog.data as data
 import catalog.login as login
 
 
+@app.route("/u/<category_name>", methods=["GET"])
+@login.login_required
+def update_category(category_name):
+    """Render update category page."""
+    category = data.get_category(category_name)
+    if not category:
+        return "Not Found", 404
+    cancel_url = url_for('read_category', category_name = category_name)
+    return render_template("edit.html",
+                           title = "Edit a category.",
+                           entity = category,
+                           cancel_url = cancel_url)
+
+
+@app.route("/u/<category_name>", methods=["POST"])
+@login.login_required
+def update_category_post(category_name):
+    """Handle update category request."""
+    # Get the category to be updated.
+    category = data.get_category(category_name)
+    if not category:
+        return "Not Found", 404
+    # Check if the category name has changed.
+    old_name = category.name
+    new_name = request.form["name"]
+    if old_name != new_name:
+        # Make sure the new name does not already exist.
+        categories = data.get_categories()
+        if new_name in categories:
+            flash("Error: The category name '{0}' already exists.".format(
+                new_name))
+            return redirect(url_for('update_category',
+                                    category_name = old_name))
+        # Update the in-memory cache about the category name change.
+        data.change_category_name_in_cache(old_name, new_name)
+        category.name = new_name
+    # Update description and wiki url, and update into database.
+    category.description = request.form["description"]
+    category.wiki_url = request.form["wiki"]
+    category.last_modified = datetime.now()
+    data.update_category(category)
+    flash("The category has been updated.")
+    return redirect(url_for('read_category', category_name = new_name))
+
+
 @app.route("/u/<category_name>/<item_name>")
 @login.login_required
 def update_item(category_name, item_name):
