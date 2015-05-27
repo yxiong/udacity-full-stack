@@ -18,11 +18,12 @@ from catalog import app
 from database_setup import Base
 from database_setup import DATABASE_NAME
 from database_setup import Category
-from database_setup import Item
+from database_setup import Item as DBItem
 
 
 engine = create_engine(DATABASE_NAME)
 Base.metadata.bind = engine
+DBSession = sessionmaker(bind = engine)
 db_session = scoped_session(sessionmaker(bind = engine))
 
 
@@ -104,7 +105,7 @@ def get_categories():
 
 def get_category(category_name):
     """Get a category by name."""
-    return get_categories()[category_name]
+    return get_categories().get(category_name, None)
 
 
 def add_category(category):
@@ -144,19 +145,47 @@ def change_category_name_in_cache(old_name, new_name):
 
 
 ################################################################
-# Utilities for getting and putting `Item`s.
+# Utilities for getting and putting items.
 ################################################################
 def get_items(category_name):
-    """Get all items that belongs to the given category."""
+    """Get all items that belongs to the given category.
+
+    * If the category does not exist, a `None` will be returned.
+    * If the category exists but contains no item, an empty dictionary will be
+      returned."""
     # Check cache first.
     items = cache.get("items/"+category_name)
     if items:
         return items
+    # Make sure the `category_name` is valid.
+    category = get_category(category_name)
+    if not category:
+        return None
     # Make a query to the database and copy the results to memory.
     items = {}
-    category = get_category(category_name)
-    for i in db_session.query(Item).filter(
-            Item.category_id == category.cid).all():
+    session = DBSession()
+    for i in session.query(DBItem).filter(
+            DBItem.category_id == category.cid).all():
         items[i.name] = MemItem.from_db_item(i, category)
+    session.close()
     cache.set("items/"+category_name, items)
     return items
+
+
+def add_item(mem_item):
+    # Add to database.
+    db_item = DBItem(name = mem_item.name,
+                     description = mem_item.description,
+                     wiki_url = mem_item.wiki_url,
+                     last_modified = mem_item.last_modified,
+                     category_id = mem_item.category.cid)
+    session = DBSession()
+    session.add(db_item)
+    session.commit()
+    mem_item.iid = db_item.iid
+    session.close()
+    # Update in cache.
+    items = cache.get("items/"+mem_item.category.name)
+    if items:
+        items[mem_item.name] = mem_item
+        cache.set("items/"+mem_item.category.name, items)

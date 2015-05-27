@@ -22,6 +22,7 @@ app = Flask(__name__)
 csrf = SeaSurf(app)
 
 
+import catalog.create
 import catalog.data as data
 import catalog.login as login
 import catalog.view
@@ -116,47 +117,6 @@ def create_category_post():
     data.add_category(category)
     flash("The category has been added.")
     return redirect(url_for('read_category', category_name = name))
-
-
-@app.route("/c/<category_name>/item")
-@login.login_required
-def create_item(category_name):
-    """Render create item page."""
-    item = Item(name="Item name",
-                description="Add some description.",
-                wiki_url = "http://www.wikipedia.org/xxx")
-    cancel_url = url_for('read_category', category_name = category_name)
-    return render_template("edit.html",
-                           title = "Create an item.",
-                           entity = item,
-                           cancel_url = cancel_url)
-
-
-@app.route("/c/<category_name>/item", methods=["POST"])
-@login.login_required
-def create_item_post(category_name):
-    """Handle create item request."""
-    name = request.form["name"]
-    # Make sure the item name does not exist in the same category.
-    if name in items[category_name]:
-        flash("Error: The item name '{0}' already exists"
-              "in this category.".format(name))
-        return redirect(url_for('create_item', category_name=category_name))
-    # Create an `Item` object and add into database.
-    item = Item(name=name,
-                description = request.form["description"],
-                wiki_url = request.form["wiki"],
-                category = categories[category_name],
-                last_modified = datetime.now())
-    db_session.add(item)
-    db_session.commit()
-    # Update in-memory cache.
-    item.category_name = category_name
-    items[category_name][name] = item
-    flash("The item has been added.")
-    return redirect(url_for('read_item',
-                            category_name = category_name,
-                            item_name = name))
 
 
 @app.route("/u/<category_name>", methods=["GET"])
