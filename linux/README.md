@@ -63,7 +63,10 @@ Steps
 
 5. Update all currently installed packages
 
-   `sudo apt-get -qqy update`
+       ```
+       sudo apt-get -qqy update
+       sudo apt-get -qqy dist-upgrade
+       ```
 
 
 6. Change the SSH port from 22 to 2200
@@ -84,12 +87,15 @@ Steps
        iptables -A OUTPUT -o eth0 -p tcp --sport 2200 -m state --state ESTABLISHED -j ACCEPT
        iptables -A INPUT -i eth0 -p tcp --dport 80 -m state --state NEW,ESTABLISHED -j ACCEPT
        iptables -A OUTPUT -o eth0 -p tcp --sport 80 -m state --state ESTABLISHED -j ACCEPT
-       iptables -A INPUT -i eth0 -p tcp --dport 123 -m state --state NEW,ESTABLISHED -j ACCEPT
-       iptables -A OUTPUT -o eth0 -p tcp --sport 123 -m state --state ESTABLISHED -j ACCEPT
+       iptables -A INPUT -i eth0 -p udp --dport 123 -m state --state NEW,ESTABLISHED -j ACCEPT
+       iptables -A OUTPUT -o eth0 -p udp --sport 123 -m state --state ESTABLISHED -j ACCEPT
        iptables -P INPUT DROP
        iptables -P OUTPUT DROP
        iptables -P FORWARD DROP
-       iptables-save
+       iptables-save > /root/dsl.fw
+       vi /etc/rc.local  # Append the following lines.
+           # Restore firewall configurations.
+           /sbin/iptables-restore < /root/dsl.fw
        ```
 
 
@@ -167,25 +173,30 @@ Steps
 
         # Setup the apache wsgi module.
         cp -r /home/catalog/udacity-full-stack/catalog /var/www/
-        vi /var/www/catalog/catalog.wsgi
-            # Add following lines.
+        vi /var/www/catalog/catalog.wsgi                # Add following lines.
             import sys
             sys.path.insert(0, '/var/www/catalog/')
             from application import app as application
-        vi /etc/apache2/apache2.conf
-            # Comment out the line "IncludeOptional sites-enabled/*.conf"
-            # Add following lines.
+        vi /etc/apache2/sites-available/catalog.conf    # Add following lines.
+            # Configuration for the catalog application site.
             <VirtualHost *>
+                # Configure a distinct daemon process for catalog application.
                 WSGIDaemonProcess catalog user=catalog group=catalog threads=5
+                # Maps the root URL (/) to the designated catalog.wsgi script.
                 WSGIScriptAlias / /var/www/catalog/catalog.wsgi
+                # Specify the error log file.
                 ErrorLog /var/www/catalog/error.log
                 <Directory /var/www/catalog>
+                    # Sets the process group our application is assigned to.
                     WSGIProcessGroup catalog
+                    # Sets the application group our application belongs to (empty string).
                     WSGIApplicationGroup %{GLOBAL}
                     Order deny,allow
                     Allow from all
                 </Directory>
             </VirtualHost>
+        a2dissite 000-default
+        a2ensite catalog
         service apache2 restart
         ```
 
