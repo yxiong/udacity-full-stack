@@ -163,38 +163,18 @@ Steps
         su catalog
         cd ~
         git clone https://github.com/yxiong/udacity-full-stack
-        vi udacity-full-stack/catalog/database_setup.py
+        vi udacity-full-stack/catalog/catalog/data.py
             # Modify DATABASE_NAME to "postgresql:///catalog"
         cd udacity-full-stack/catalog
-        python database_setup.py
+        python setup_database.py
         exit
         iptables -P INPUT DROP
         iptables -P OUTPUT DROP
 
         # Setup the apache wsgi module.
         cp -r /home/catalog/udacity-full-stack/catalog /var/www/
-        vi /var/www/catalog/catalog.wsgi                # Add following lines.
-            import sys
-            sys.path.insert(0, '/var/www/catalog/')
-            from application import app as application
-        vi /etc/apache2/sites-available/catalog.conf    # Add following lines.
-            # Configuration for the catalog application site.
-            <VirtualHost *>
-                # Configure a distinct daemon process for catalog application.
-                WSGIDaemonProcess catalog user=catalog group=catalog threads=5
-                # Maps the root URL (/) to the designated catalog.wsgi script.
-                WSGIScriptAlias / /var/www/catalog/catalog.wsgi
-                # Specify the error log file.
-                ErrorLog /var/www/catalog/error.log
-                <Directory /var/www/catalog>
-                    # Sets the process group our application is assigned to.
-                    WSGIProcessGroup catalog
-                    # Sets the application group our application belongs to (empty string).
-                    WSGIApplicationGroup %{GLOBAL}
-                    Order deny,allow
-                    Allow from all
-                </Directory>
-            </VirtualHost>
+        # Copy `catalog.wsgi` in current folder to `/var/www/catalog/catalog.wsgi`.
+        # Copy `catalog.conf` in current folder to `/etc/apache2/sites-available/catalog.conf`.
         a2dissite 000-default
         a2ensite catalog
         service apache2 restart
