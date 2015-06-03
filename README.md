@@ -2,7 +2,7 @@ Udacity Full Stack
 ==================
 
 This repo contains all the course projects for
-[Udacity Full-Stack Developer course](https://www.udacity.com/course/full-stack-web-developer-nanodegree--nd004).
+[Udacity Full Stack Developer Nanodegree](https://www.udacity.com/course/full-stack-web-developer-nanodegree--nd004).
 
 See `README.md` in individual folders for more information.
 

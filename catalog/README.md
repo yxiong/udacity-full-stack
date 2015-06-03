@@ -6,6 +6,10 @@ a variety of categories as well as provide a user registration and
 authentication system. Registered users will have the ability to post, edit and
 delete their own items.
 
+
+Launch in vagrant virtual machine
+---------------------------------
+
 1. Launch the vagrant virtual machine: go to the parent directory (where
    `Vagrantfile` resides) and run `vagrant up`.
 
@@ -14,7 +18,7 @@ delete their own items.
 
 3. Setup the database `python database_setup.py`.
 
-4. Launch the web server `python application.py`.
+4. Launch the web server `python run_server.py`.
 
 
 Author: Ying Xiong.  
