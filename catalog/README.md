@@ -29,17 +29,20 @@ Launch in a vagrant virtual machine
 Deploy on a Linux server
 ------------------------
 
-1. Setup the database `python setup_database.py`.
+1. Download the `client_secrets.json` from Google developer console, and put it
+   in `catalog` subfolder.
 
-2. Create a `catalog.wsgi` script that contains the following line:
+2. Setup the database `python setup_database.py`.
+
+3. Create a `catalog.wsgi` script that contains the following line:
 
        ```
        from catalog import app as application
        ```
 
-3. Create a `catalog.conf` configuration file for this WSGI job.
+4. Create a `catalog.conf` apache configuration file for this WSGI job.
 
-4. Restart apache server.
+5. Restart apache server.
 
 See the `linux/README.md` file in the parent folder for an example.
 

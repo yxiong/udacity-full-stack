@@ -163,6 +163,7 @@ Steps
         su catalog
         cd ~
         git clone https://github.com/yxiong/udacity-full-stack
+        # Copy the `client_secrets.json` file to `catalog/catalog` directory.
         vi udacity-full-stack/catalog/catalog/data.py
             # Modify DATABASE_NAME to "postgresql:///catalog"
         cd udacity-full-stack/catalog
@@ -214,7 +215,7 @@ To reset the database and app
     sudo -u postgres createdb catalog
     su catalog
     cd ~/udacity-full-stack/catalog
-    python database_setup.py
+    python setup_database.py
     exit
     service apache2 start
 
