@@ -19,7 +19,8 @@ Launch in a vagrant virtual machine
 3. Download the `client_secrets.json` from Google developer console, and put it
    in `catalog` subfolder.
 
-4. Setup the database `python setup_database.py`.
+4. [Remove `catalog/catalog.db` if already existed.]
+   Setup the database `python setup_database.py`.
 
 5. Launch the web server
    `[CATALOG_CONFIG_FILE=/path/to/config.py] python run_server.py`.

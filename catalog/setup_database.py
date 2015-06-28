@@ -21,10 +21,6 @@ from catalog.data import engine
 
 
 if __name__ == "__main__":
-    # Remove the database file if already exists. This only works for sqlite.
-    if DATABASE_NAME == "sqlite:///catalog.db" and os.path.exists("catalog.db"):
-        os.remove("catalog.db")
-
     # Create the database and make a session from the engine.
     Base.metadata.create_all(engine)
     session = DBSession()
