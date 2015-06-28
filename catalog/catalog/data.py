@@ -304,7 +304,7 @@ def add_item(mem_item):
                      description = mem_item.description,
                      wiki_url = mem_item.wiki_url,
                      last_modified = mem_item.last_modified,
-                     category_id = mem_item.category.cid)
+                     category_id = mem_item.category_id)
     session = DBSession()
     session.add(db_item)
     session.commit()
