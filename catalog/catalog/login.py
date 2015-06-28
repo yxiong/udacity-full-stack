@@ -22,7 +22,7 @@ from catalog import csrf
 
 # Google+ authentication configuration.
 _this_file_path = os.path.dirname(os.path.realpath(__file__))
-client_secrets = json.loads(open(
+client_id = json.loads(open(
     _this_file_path + "/client_secrets.json", 'r').read())['web']['client_id']
 
 
@@ -31,7 +31,7 @@ def login():
     """Render the login page."""
     state = os.urandom(16).encode('hex')
     login_session["state"] = state
-    return render_template("login.html", state=state)
+    return render_template("login.html", state=state, client_id = client_id)
 
 
 @csrf.exempt
@@ -68,7 +68,7 @@ def gconnect():
     gplus_id = credentials.id_token["sub"]
     if result["user_id"] != gplus_id:
         return "Token's user ID doesn't match given user ID", 401
-    if result["issued_to"] != client_secrets:
+    if result["issued_to"] != client_id:
         return "Token's client ID does not match app's.", 401
     # Check if the user is already logged in.
     stored_gplus_id = login_session.get("gplus_id")

@@ -10,6 +10,8 @@ from flask.ext.seasurf import SeaSurf
 # These definitions need to come before importing any module in current
 # directory, in order to avoid circular import issues.
 app = Flask(__name__)
+app.config.from_object("catalog.default_config")
+app.config.from_envvar("CATALOG_CONFIG_FILE", silent=True)
 csrf = SeaSurf(app)
 
 
@@ -20,7 +22,3 @@ import catalog.delete
 import catalog.login
 import catalog.read
 import catalog.update
-
-
-# Secret key generated with `os.urandom(24)`.
-app.secret_key = '\x8bu\xc5\x87\x07$4\x83\xcbz\xfaB %\xc8\xf9A\xe2J=\x0e/"#'

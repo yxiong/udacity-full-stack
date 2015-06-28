@@ -18,7 +18,7 @@ Launch in a vagrant virtual machine
 
 3. Setup the database `python setup_database.py`.
 
-4. Launch the web server `python run_server.py`.
+4. Launch the web server `[CATALOG_CONFIG_FILE=/path/to/config.py] python run_server.py`.
 
 
 Deploy on a Linux server
